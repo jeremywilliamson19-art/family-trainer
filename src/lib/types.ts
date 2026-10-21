@@ -77,6 +77,11 @@ export interface Food {
   protein: number
   carbs: number | null
   fat: number | null
+  /** Extra nutrients, when the source has them (null/missing = unknown). */
+  fiber?: number | null
+  sugar?: number | null
+  sat_fat?: number | null
+  sodium_mg?: number | null
   /** USDA food group, used later for dislike filtering (16 = legumes). */
   category?: number | null
   /** Alternate portions [label, grams], from USDA. */

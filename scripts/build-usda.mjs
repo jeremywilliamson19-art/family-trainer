@@ -2,8 +2,9 @@
 // CSV download (public domain): https://fdc.nal.usda.gov/download-datasets
 // Usage: node scripts/build-usda.mjs <path to unzipped SR Legacy CSV folder>
 //
-// Output rows: [fdc_id, name, category_id, kcal, protein, carbs, fat, portions]
-// Nutrients are per 100 g; portions are [label, grams].
+// Output rows: [fdc_id, name, category_id, kcal, protein, carbs, fat, portions,
+//               fiber, sugar, saturated fat, sodium_mg]
+// Nutrients are per 100 g (null when USDA has no value); portions are [label, grams].
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -34,13 +35,13 @@ function parseCsv(text) {
 const read = (f) => parseCsv(readFileSync(join(dir, f), 'utf8'))
 // Baby foods, regional native foods, and lab QC samples aren't useful here.
 const SKIP_CATEGORIES = new Set(['3', '24', '27'])
-const NUTRIENTS = { 1008: 'kcal', 1003: 'p', 1005: 'c', 1004: 'f' }
+const NUTRIENTS = { 1008: 'kcal', 1003: 'p', 1005: 'c', 1004: 'f', 1079: 'fiber', 2000: 'sugar', 1258: 'sat', 1093: 'na' }
 
 const units = Object.fromEntries(read('measure_unit.csv').map((u) => [u.id, u.name]))
 const foods = new Map()
 for (const f of read('food.csv')) {
   if (SKIP_CATEGORIES.has(f.food_category_id)) continue
-  foods.set(f.fdc_id, { id: Number(f.fdc_id), name: f.description, cat: Number(f.food_category_id), kcal: null, p: 0, c: 0, f: 0, portions: [] })
+  foods.set(f.fdc_id, { id: Number(f.fdc_id), name: f.description, cat: Number(f.food_category_id), kcal: null, p: 0, c: 0, f: 0, fiber: null, sugar: null, sat: null, na: null, portions: [] })
 }
 for (const n of read('food_nutrient.csv')) {
   const key = NUTRIENTS[n.nutrient_id]
@@ -62,7 +63,7 @@ for (const p of read('food_portion.csv')) {
 
 const rows = [...foods.values()]
   .filter((f) => f.kcal !== null)
-  .map((f) => [f.id, f.name, f.cat, f.kcal, f.p, f.c, f.f, f.portions])
+  .map((f) => [f.id, f.name, f.cat, f.kcal, f.p, f.c, f.f, f.portions, f.fiber, f.sugar, f.sat, f.na])
 mkdirSync('public/foods', { recursive: true })
 writeFileSync('public/foods/usda.json', JSON.stringify(rows))
 console.log(`Wrote ${rows.length} foods`)

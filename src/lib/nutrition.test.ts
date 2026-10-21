@@ -101,3 +101,24 @@ describe('everyday foods list', () => {
     expect(commonFood(COMMON_FOODS[0], byId.get(171534) as any)).toMatchObject({ name: 'Chicken breast, grilled', serving_label: '3 oz', serving_g: 85, protein: 25.9 })
   })
 })
+
+describe('extra nutrients', () => {
+  it('USDA foods carry fiber, sugar, saturated fat and sodium per portion', () => {
+    const b = withPortion(banana, '1 cup, sliced', 150)
+    expect(b).toMatchObject({ fiber: 3.9, sugar: 18.3, sodium_mg: 1.5 })
+  })
+
+  it('totals add up and count items with unknown values', async () => {
+    const quick: Food = { id: 'q:1', source: 'quick', name: 'Burrito', serving_label: '1 meal', serving_g: null, kcal: 900, protein: 40, carbs: null, fat: null }
+    const t = sumTotals([{ food: banana, servings: 2 }, { food: quick, servings: 1 }])
+    expect(t.fiber).toBeCloseTo((banana.fiber ?? 0) * 2, 5)
+    expect(t.missing).toEqual({ fiber: 1, sugar: 1, sat_fat: 1, sodium_mg: 1 })
+    const { nutrientGuides } = await import('./macros')
+    expect(nutrientGuides(2317)).toEqual({ fiber_min_g: 32, sat_fat_max_g: 26, sodium_max_mg: 2300 })
+  })
+
+  it('Open Food Facts sodium (grams) becomes milligrams', () => {
+    const f = offFood({ code: '9', product_name: 'Chips', serving_quantity: 28, nutriments: { 'energy-kcal_serving': 150, proteins_serving: 2, sodium_serving: 0.17, fiber_serving: 1, sugars_serving: 0.5, 'saturated-fat_serving': 1.5 } })
+    expect(f).toMatchObject({ sodium_mg: 170, fiber: 1, sugar: 0.5, sat_fat: 1.5 })
+  })
+})

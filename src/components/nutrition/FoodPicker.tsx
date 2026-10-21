@@ -245,6 +245,10 @@ function CustomFoodForm({
   const [protein, setProtein] = useState('')
   const [carbs, setCarbs] = useState('')
   const [fat, setFat] = useState('')
+  const [fiber, setFiber] = useState('')
+  const [sugar, setSugar] = useState('')
+  const [satFat, setSatFat] = useState('')
+  const [sodium, setSodium] = useState('')
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -261,6 +265,10 @@ function CustomFoodForm({
       protein: Number(protein) || 0,
       carbs: showMacros ? n(carbs) : null,
       fat: showMacros ? n(fat) : null,
+      fiber: showMacros ? n(fiber) : null,
+      sugar: showMacros ? n(sugar) : null,
+      sat_fat: showMacros ? n(satFat) : null,
+      sodium_mg: showMacros ? n(sodium) : null,
     })
   }
 
@@ -310,6 +318,29 @@ function CustomFoodForm({
           </>
         )}
       </div>
+      {showMacros && (
+        <details className="more-nutrients">
+          <summary>More from the label (optional)</summary>
+          <div className="macro-inputs">
+            <label className="field">
+              <span>Fiber g</span>
+              <input type="number" inputMode="decimal" value={fiber} onChange={(e) => setFiber(e.target.value)} />
+            </label>
+            <label className="field">
+              <span>Sugar g</span>
+              <input type="number" inputMode="decimal" value={sugar} onChange={(e) => setSugar(e.target.value)} />
+            </label>
+            <label className="field">
+              <span>Saturated fat g</span>
+              <input type="number" inputMode="decimal" value={satFat} onChange={(e) => setSatFat(e.target.value)} />
+            </label>
+            <label className="field">
+              <span>Sodium mg</span>
+              <input type="number" inputMode="numeric" value={sodium} onChange={(e) => setSodium(e.target.value)} />
+            </label>
+          </div>
+        </details>
+      )}
       <button className="btn">Save &amp; add</button>
       <button type="button" className="btn secondary" onClick={onCancel}>
         Cancel

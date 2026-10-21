@@ -6,22 +6,66 @@ export interface Totals {
   protein: number
   carbs: number
   fat: number
+  fiber: number
+  sugar: number
+  sat_fat: number
+  sodium_mg: number
+  /** Items with no value for each extra nutrient (their totals are undercounts). */
+  missing: { fiber: number; sugar: number; sat_fat: number; sodium_mg: number }
 }
 
-export const ZERO: Totals = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
+const EXTRA = ['fiber', 'sugar', 'sat_fat', 'sodium_mg'] as const
+
+export const ZERO: Totals = {
+  kcal: 0,
+  protein: 0,
+  carbs: 0,
+  fat: 0,
+  fiber: 0,
+  sugar: 0,
+  sat_fat: 0,
+  sodium_mg: 0,
+  missing: { fiber: 0, sugar: 0, sat_fat: 0, sodium_mg: 0 },
+}
 
 export function itemTotals(i: MealItem): Totals {
-  return {
+  const t: Totals = {
     kcal: (i.food.kcal ?? 0) * i.servings,
     protein: i.food.protein * i.servings,
     carbs: (i.food.carbs ?? 0) * i.servings,
     fat: (i.food.fat ?? 0) * i.servings,
+    fiber: 0,
+    sugar: 0,
+    sat_fat: 0,
+    sodium_mg: 0,
+    missing: { fiber: 0, sugar: 0, sat_fat: 0, sodium_mg: 0 },
   }
+  for (const k of EXTRA) {
+    const v = i.food[k]
+    if (v === null || v === undefined) t.missing[k] = 1
+    else t[k] = v * i.servings
+  }
+  return t
 }
 
 export function sumTotals(items: MealItem[]): Totals {
   return items.map(itemTotals).reduce(
-    (a, b) => ({ kcal: a.kcal + b.kcal, protein: a.protein + b.protein, carbs: a.carbs + b.carbs, fat: a.fat + b.fat }),
+    (a, b) => ({
+      kcal: a.kcal + b.kcal,
+      protein: a.protein + b.protein,
+      carbs: a.carbs + b.carbs,
+      fat: a.fat + b.fat,
+      fiber: a.fiber + b.fiber,
+      sugar: a.sugar + b.sugar,
+      sat_fat: a.sat_fat + b.sat_fat,
+      sodium_mg: a.sodium_mg + b.sodium_mg,
+      missing: {
+        fiber: a.missing.fiber + b.missing.fiber,
+        sugar: a.missing.sugar + b.missing.sugar,
+        sat_fat: a.missing.sat_fat + b.missing.sat_fat,
+        sodium_mg: a.missing.sodium_mg + b.missing.sodium_mg,
+      },
+    }),
     ZERO,
   )
 }
@@ -43,6 +87,10 @@ export function withPortion(food: Food, label: string, grams: number): Food {
     protein: Math.round(food.protein * k * 10) / 10,
     carbs: scale(food.carbs),
     fat: scale(food.fat),
+    fiber: scale(food.fiber ?? null),
+    sugar: scale(food.sugar ?? null),
+    sat_fat: scale(food.sat_fat ?? null),
+    sodium_mg: scale(food.sodium_mg ?? null),
   }
 }
 

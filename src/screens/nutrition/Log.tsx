@@ -72,7 +72,12 @@ export function Log() {
 
   return (
     <div className="screen">
-      <h1>Log food</h1>
+      <div className="row">
+        <h1>Log food</h1>
+        <Link to="/nutrition" className="btn small secondary">
+          📊 Totals
+        </Link>
+      </div>
       <div className="segmented">
         {MEAL_TYPES.map((t) => (
           <button key={t} type="button" className={type === t ? 'on' : ''} onClick={() => setType(t)}>

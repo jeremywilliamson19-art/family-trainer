@@ -102,6 +102,10 @@ export function cleanFood(raw: unknown): Food {
     protein: optNutrient(f.protein, 500) ?? 0,
     carbs: optNutrient(f.carbs, 1000),
     fat: optNutrient(f.fat, 500),
+    fiber: optNutrient(f.fiber, 300),
+    sugar: optNutrient(f.sugar, 1000),
+    sat_fat: optNutrient(f.sat_fat, 300),
+    sodium_mg: optNutrient(f.sodium_mg, 50000),
     category: f.category == null ? null : Number(f.category) || null,
     ...(portions?.length ? { portions } : {}),
   }
@@ -123,7 +127,7 @@ function mealType(v: unknown): MealType {
 
 /** Strips everything but protein, for anything a child account receives. */
 function proteinOnlyFood(f: Food): Food {
-  return { ...f, kcal: null, carbs: null, fat: null }
+  return { ...f, kcal: null, carbs: null, fat: null, fiber: null, sugar: null, sat_fat: null, sodium_mg: null }
 }
 function proteinOnlyItems(items: MealItem[]): MealItem[] {
   return items.map((i) => ({ ...i, food: proteinOnlyFood(i.food) }))

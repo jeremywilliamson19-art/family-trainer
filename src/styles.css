@@ -882,3 +882,153 @@ input[type='search'] {
   border-top: 1px solid var(--line);
   padding-top: 8px;
 }
+
+/* Nutrition detail */
+.date-nav {
+  min-height: 0;
+}
+.date-nav .btn.small {
+  min-width: 44px;
+  font-size: 20px;
+}
+.macro-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.macro-table th,
+.macro-table td {
+  text-align: right;
+  padding: 6px 4px 2px;
+  font-size: 15px;
+}
+.macro-table th:first-child {
+  text-align: left;
+}
+.macro-table thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.macro-table tr.hero th,
+.macro-table tr.hero td {
+  font-size: 19px;
+  font-weight: 700;
+}
+.macro-table .bar-row td {
+  padding: 0 4px 6px;
+}
+.nutrient-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.nutrient-list .row {
+  min-height: 0;
+}
+.meal-breakdown {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.item-breakdown {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+}
+.item-breakdown li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.section-head {
+  min-height: 0;
+}
+.section-head h2 {
+  margin: 0;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 10px;
+}
+.stat strong {
+  font-size: 20px;
+}
+.stat span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.stat.hero {
+  grid-column: 1 / -1;
+}
+.stat.hero strong {
+  font-size: 28px;
+}
+.daily-bars {
+  margin: 0;
+}
+.daily-bars svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.daily-bars .bar {
+  fill: var(--accent);
+  opacity: 0.85;
+}
+.daily-bars .bar.sel {
+  opacity: 1;
+}
+.daily-bars .axis {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.daily-bars .target {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.daily-bars .target-label,
+.daily-bars .tick {
+  fill: var(--muted);
+  font-size: 10px;
+}
+.daily-bars figcaption {
+  min-height: 20px;
+  margin-top: 4px;
+}
+.trend-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.trend-table th,
+.trend-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+.trend-table th:first-child,
+.trend-table td:first-child {
+  text-align: left;
+}
+.more-nutrients summary {
+  color: var(--accent);
+  font-weight: 600;
+  padding: 8px 0;
+}

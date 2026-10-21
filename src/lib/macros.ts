@@ -157,3 +157,14 @@ export function childProteinTarget(weightLb: number, gramsPerLb: number): number
 export function isCompleteProfile(p: Partial<Profile>): p is Profile {
   return Boolean(p.sex && p.age_years && p.height_in && p.weight_lb && p.activity_level)
 }
+
+/** Daily guide values from the Dietary Guidelines for Americans. */
+export function nutrientGuides(calories: number) {
+  return {
+    /** At least 14 g per 1,000 calories. */
+    fiber_min_g: Math.round((14 * calories) / 1000),
+    /** Saturated fat under 10% of calories. */
+    sat_fat_max_g: Math.round((calories * 0.1) / 9),
+    sodium_max_mg: 2300,
+  }
+}

@@ -21,7 +21,7 @@ function signIn(email: string) {
   return call<{ token: string }>('verifyCode', { email, code: mail.at(-1)!.match(/(\d{6})/)![1] }).token
 }
 
-const chicken: Food = { id: 'usda:171477', source: 'usda', name: 'Chicken breast, roasted', serving_label: '100 g', serving_g: 100, kcal: 165, protein: 31, carbs: 0, fat: 3.6, category: 5 }
+const chicken: Food = { id: 'usda:171477', source: 'usda', name: 'Chicken breast, roasted', serving_label: '100 g', serving_g: 100, kcal: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sat_fat: 1, sodium_mg: 74, category: 5 }
 const meal = (id: string, extra: Partial<Meal> = {}) => ({ id, date: '2026-10-21', meal_type: 'dinner', items: [{ food: chicken, servings: 2 }], ...extra })
 
 let dad: string, mom: string, kid: string, kidId: string, dadId: string
@@ -101,7 +101,7 @@ describe('meals', () => {
     call('saveFavorite', { favorite: { id: 'f1', name: 'Chicken', meal_type: 'dinner', items: [{ food: chicken, servings: 1 }] } }, kid)
     const sync = call('nutritionSync', {}, kid)
     const json = JSON.stringify(sync)
-    expect(json).not.toMatch(/"kcal":\d|"carbs":\d|"fat":\d|calories|carbs_g|fat_g/)
+    expect(json).not.toMatch(/"kcal":\d|"carbs":\d|"fat":\d|"fiber":\d|"sugar":\d|"sat_fat":\d|"sodium_mg":\d|calories|carbs_g|fat_g/)
     expect(json).toMatch(/"protein":31/)
     // Dad still sees the full numbers for the child's meal.
     expect(JSON.stringify(call('listMeals', { member_id: kidId }, dad))).toMatch(/"kcal":165/)

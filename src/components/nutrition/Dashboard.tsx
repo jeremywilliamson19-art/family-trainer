@@ -66,6 +66,10 @@ export function AdultDashboard({ targets, eaten }: { targets: Targets; eaten: To
         </span>
         <span className="link-text">Edit</span>
       </Link>
+
+      <Link to="/nutrition" className="btn secondary">
+        📊 Full breakdown &amp; trends
+      </Link>
     </section>
   )
 }
@@ -98,6 +102,9 @@ export function ChildDashboard({ target, eaten: raw }: { target: number; eaten: 
           </div>
           <small className={done ? 'ok' : 'muted'}>{done ? 'You hit your protein today! 💪' : `${target - eaten} g to go`}</small>
         </div>
+        <Link to="/nutrition?view=trends" className="btn secondary">
+          📊 My protein history
+        </Link>
       </section>
       <section className="card tip">
         <strong>Fuel tip</strong>

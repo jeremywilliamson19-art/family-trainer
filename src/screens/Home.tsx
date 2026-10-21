@@ -80,7 +80,10 @@ export function Home() {
       </Link>
 
       <section className="card">
-        <h2>Today</h2>
+        <Link to="/nutrition" className="row link-row section-head">
+          <h2>Today</h2>
+          <span className="link-text small">Details ›</span>
+        </Link>
         <MealList meals={todays} showMacros={!isChild} />
         {outbox.length > 0 && <p className="muted small">{outbox.length} change{outbox.length === 1 ? '' : 's'} waiting to sync</p>}
         {error && targets !== undefined && <p className="error small">Sync problem: {error}</p>}

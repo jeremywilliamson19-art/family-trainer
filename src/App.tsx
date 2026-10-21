@@ -22,6 +22,7 @@ import { WorkoutLogger } from './screens/training/WorkoutLogger'
 import { WorkoutView } from './screens/training/WorkoutView'
 import { ProgramEditor } from './screens/training/ProgramEditor'
 import { Log } from './screens/nutrition/Log'
+import { NutritionDetail } from './screens/nutrition/NutritionDetail'
 import { MealEditor } from './screens/nutrition/MealEditor'
 import { TargetsSetup } from './screens/nutrition/TargetsSetup'
 
@@ -119,6 +120,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/log" element={<Log />} />
+          <Route path="/nutrition" element={<NutritionDetail />} />
           <Route path="/train" element={<TrainHome />} />
           <Route path="/train/workout" element={<WorkoutLogger />} />
           <Route path="/train/log/:id" element={<WorkoutView />} />

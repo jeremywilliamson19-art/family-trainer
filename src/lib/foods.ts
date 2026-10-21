@@ -3,7 +3,37 @@
 import { COMMON_FOODS, type CommonFood } from './commonFoods'
 import type { Food } from './types'
 
-type UsdaRow = [id: number, name: string, cat: number, kcal: number, p: number, c: number, f: number, portions: [string, number][]]
+type UsdaRow = [
+  id: number,
+  name: string,
+  cat: number,
+  kcal: number,
+  p: number,
+  c: number,
+  f: number,
+  portions: [string, number][],
+  fiber?: number | null,
+  sugar?: number | null,
+  sat?: number | null,
+  sodium?: number | null,
+]
+
+/** A USDA row's nutrients for a portion of `grams`. */
+function usdaNutrients(r: UsdaRow, grams: number) {
+  const k = grams / 100
+  const r1 = (v: number) => Math.round(v * k * 10) / 10
+  const opt = (v: number | null | undefined) => (v === null || v === undefined ? null : r1(v))
+  return {
+    kcal: r1(r[3]),
+    protein: r1(r[4]),
+    carbs: r1(r[5]),
+    fat: r1(r[6]),
+    fiber: opt(r[8]),
+    sugar: opt(r[9]),
+    sat_fat: opt(r[10]),
+    sodium_mg: opt(r[11]),
+  }
+}
 
 let usda: Promise<UsdaRow[]> | null = null
 
@@ -20,20 +50,15 @@ export function loadUsda(): Promise<UsdaRow[]> {
 
 /** A USDA food expressed per its first household portion (or 100 g). */
 export function usdaFood(r: UsdaRow): Food {
-  const [id, name, cat, kcal, p, c, f, portions] = r
+  const [id, name, cat, , , , , portions] = r
   const [label, g] = portions[0] ?? ['100 g', 100]
-  const k = g / 100
-  const r1 = (v: number) => Math.round(v * k * 10) / 10
   return {
     id: `usda:${id}`,
     source: 'usda',
     name,
     serving_label: label,
     serving_g: g,
-    kcal: r1(kcal),
-    protein: r1(p),
-    carbs: r1(c),
-    fat: r1(f),
+    ...usdaNutrients(r, g),
     category: cat,
     portions: [['100 g', 100], ...portions],
   }
@@ -75,9 +100,7 @@ export function commonFood(c: CommonFood, row: UsdaRow): Food {
   const base = usdaFood(row)
   const portions = c.custom ? [c.custom, ...(base.portions ?? [])] : (base.portions ?? [])
   const [label, g] = c.custom ?? portions.find(([l]) => c.portion && l.includes(c.portion)) ?? row[7][0] ?? ['100 g', 100]
-  const k = g / 100
-  const r1 = (v: number) => Math.round(v * k * 10) / 10
-  return { ...base, name: c.name, serving_label: label, serving_g: g, kcal: r1(row[3]), protein: r1(row[4]), carbs: r1(row[5]), fat: r1(row[6]), portions }
+  return { ...base, name: c.name, serving_label: label, serving_g: g, ...usdaNutrients(row, g), portions }
 }
 
 /** Every query word must start a word of the name or aliases ("egg" finds "eggs"). */
@@ -147,6 +170,11 @@ export function offFood(p: OffProduct): Food | null {
     protein: r1(protein) ?? 0,
     carbs: r1(per('carbohydrates')),
     fat: r1(per('fat')),
+    fiber: r1(per('fiber')),
+    sugar: r1(per('sugars')),
+    sat_fat: r1(per('saturated-fat')),
+    // OFF stores sodium in grams.
+    sodium_mg: per('sodium') === null ? null : Math.round(per('sodium')! * 1000),
   }
 }
 
