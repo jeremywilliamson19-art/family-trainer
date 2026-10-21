@@ -2,7 +2,8 @@
 // doPost and setup as top-level functions.
 import './polyfill'
 import { randomBytes } from '@noble/hashes/utils.js'
-import { handle, type Env } from './api'
+import type { Env } from './api'
+import { handle } from './router'
 import { SheetStore } from './store'
 import { generateVapidKeys } from './webpush'
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ChipList } from '../components/ChipList'
 import { DeviceAlerts } from '../components/DeviceAlerts'
 import { Equipment } from '../components/Equipment'
@@ -55,6 +56,16 @@ export function Settings() {
               <p className="muted">Recipe book only. You can turn tracking on any time.</p>
             )}
           </section>
+
+          {s.track_food && (
+            <section className="card stack">
+              <h2>Nutrition targets</h2>
+              <p className="muted small">Age, height, weight, goal and activity level.</p>
+              <Link to="/targets" className="btn secondary">
+                Edit my targets
+              </Link>
+            </section>
+          )}
 
           {s.track_workouts && (
             <>

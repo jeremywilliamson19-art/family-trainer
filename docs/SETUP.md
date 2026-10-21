@@ -32,9 +32,11 @@ npm run deploy:web       # test, build, publish the app to the gh-pages branch
 ## Local development
 
 ```bash
-echo "VITE_API_URL=https://script.google.com/macros/s/…/exec" > .env.local
-npm run dev     # BASE_PATH=/ npm run dev to serve at the root
-npm test        # API privacy rules, push crypto, and the bundle in an Apps Script-like sandbox
+npm run dev:api                                           # real handlers, in-memory data; codes print here
+VITE_API_URL=http://localhost:8787 BASE_PATH=/ npm run dev
+npm test        # privacy rules, macro math, food search, offline queue, push crypto, Apps Script bundle
 ```
+
+The generic food list (`public/foods/usda.json`) is built from USDA's public-domain SR Legacy download with `node scripts/build-usda.mjs <csv folder>`. Everyday foods with friendly names are in `src/lib/commonFoods.ts`.
 
 **Jeremy must be the first to sign in.** Only `ADMIN_EMAIL`, invited emails, and existing members can receive a code.

@@ -2,7 +2,8 @@
 // an in-memory store. These replace the old Postgres RLS tests.
 import { randomBytes } from 'node:crypto'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { handle, type Env } from '../src/api'
+import type { Env } from '../src/api'
+import { handle } from '../src/router'
 import { MemoryStore } from '../src/store'
 import { generateVapidKeys } from '../src/webpush'
 

@@ -64,18 +64,18 @@ interface PushSub {
   last_error: string | null
 }
 
-type MemberRow = Member & { email: string | null }
+export type MemberRow = Member & { email: string | null }
 
 const CODE_TTL = 15 * 60 * 1000
 const MAX_CODE_ATTEMPTS = 5
 const RESEND_GAP = 30 * 1000
-const DAYS: Day[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+export const DAYS: Day[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const DAY_TYPES: DayType[] = ['gym', 'home', 'rest']
 const SPORTS = ['football', 'basketball', 'rugby', 'soccer', 'baseball', 'track', 'wrestling', 'other']
 const PAIRING_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 const ADMIN_DEFAULT_DISLIKES = ['beans', 'legumes', 'edamame', 'lentils', 'chickpeas', 'hummus']
 
-const hash = (s: string) => hex(sha256(utf8(s)))
+export const hash = (s: string) => hex(sha256(utf8(s)))
 /** Lowercased; for Gmail, dots and +tags are dropped since Gmail ignores them. */
 function normEmail(e: unknown): string {
   const email = String(e ?? '').trim().toLowerCase()
@@ -85,9 +85,9 @@ function normEmail(e: unknown): string {
   }
   return email
 }
-const iso = (env: Env) => new Date(env.now()).toISOString()
+export const iso = (env: Env) => new Date(env.now()).toISOString()
 
-function publicMember(m: MemberRow): Member {
+export function publicMember(m: MemberRow): Member {
   // Email stays server-side; nobody's UI needs another member's address.
   const { email: _email, ...rest } = m
   return rest
@@ -97,18 +97,18 @@ function publicMember(m: MemberRow): Member {
 // Validation helpers
 // ---------------------------------------------------------------------------
 
-function num(v: unknown, lo: number, hi: number, label: string): number {
+export function num(v: unknown, lo: number, hi: number, label: string): number {
   const n = Number(v)
   if (!Number.isFinite(n) || n < lo || n > hi) throw new ApiError('invalid', `Check the ${label}`)
   return n
 }
-function optNum(v: unknown, lo: number, hi: number, label: string): number | null {
+export function optNum(v: unknown, lo: number, hi: number, label: string): number | null {
   return v === null || v === '' || v === undefined ? null : num(v, lo, hi, label)
 }
-function bool(v: unknown): boolean {
+export function bool(v: unknown): boolean {
   return v === true
 }
-function text(v: unknown, max: number, label: string): string {
+export function text(v: unknown, max: number, label: string): string {
   const s = String(v ?? '').trim()
   if (!s || s.length > max) throw new ApiError('invalid', `Enter a ${label}`)
   return s
@@ -145,6 +145,7 @@ function defaultSettings(memberId: string, role: Role): MemberSettings {
     dislikes: role === 'admin' ? [...ADMIN_DEFAULT_DISLIKES] : [],
     weekly_schedule: {},
     home_equipment: [],
+    training_adjust: true,
   }
 }
 
@@ -189,7 +190,7 @@ function startSession(env: Env, memberId: string): { token: string } {
   return { token }
 }
 
-function caller(env: Env, token: unknown): MemberRow {
+export function caller(env: Env, token: unknown): MemberRow {
   if (typeof token !== 'string' || !token) throw new ApiError('auth', 'Not signed in')
   const s = env.store.get<Session>('sessions', hash(token))
   const m = s && env.store.get<MemberRow>('members', s.member_id)
@@ -202,7 +203,7 @@ function caller(env: Env, token: unknown): MemberRow {
 }
 
 /** The member themself, or the guardian of that child. */
-function canManage(env: Env, me: MemberRow, targetId: string): MemberRow {
+export function canManage(env: Env, me: MemberRow, targetId: string): MemberRow {
   const target = env.store.get<MemberRow>('members', targetId)
   if (!target) throw new ApiError('not_found', 'Member not found')
   if (target.id === me.id) return target
@@ -360,7 +361,7 @@ function updateMember(env: Env, me: MemberRow, p: { member_id?: unknown; patch?:
 
 function sanitizeSettings(target: MemberRow, cur: MemberSettings, patch: Record<string, unknown>): MemberSettings {
   const next = { ...cur }
-  for (const k of ['track_food', 'track_workouts', 'feed_workouts', 'feed_prs', 'feed_test_bests', 'feed_streaks', 'feed_body'] as const) {
+  for (const k of ['track_food', 'track_workouts', 'training_adjust', 'feed_workouts', 'feed_prs', 'feed_test_bests', 'feed_streaks', 'feed_body'] as const) {
     if (k in patch) next[k] = bool(patch[k])
   }
   if ('dislikes' in patch) next.dislikes = strList(patch.dislikes)
@@ -373,7 +374,8 @@ function sanitizeSettings(target: MemberRow, cur: MemberSettings, patch: Record<
 
 function getSettings(env: Env, me: MemberRow, p: { member_id?: unknown }) {
   const target = canManage(env, me, String(p.member_id ?? me.id))
-  return env.store.get<MemberSettings>('member_settings', target.id) ?? defaultSettings(target.id, target.role)
+  // Defaults fill in settings added after the row was first saved.
+  return { ...defaultSettings(target.id, target.role), ...env.store.get<MemberSettings>('member_settings', target.id) }
 }
 
 function saveSettings(env: Env, me: MemberRow, p: { member_id?: unknown; patch?: Record<string, unknown> }) {
@@ -500,18 +502,18 @@ export function sendToMember(env: Env, memberId: string, msg: PushMessage) {
 }
 
 // ---------------------------------------------------------------------------
-// Router
+// Handler tables (joined with the other modules in router.ts)
 // ---------------------------------------------------------------------------
 
-type Params = Record<string, unknown>
-const PUBLIC: Record<string, (env: Env, p: Params) => unknown> = {
+export type Params = Record<string, unknown>
+export const HOUSEHOLD_PUBLIC: Record<string, (env: Env, p: Params) => unknown> = {
   requestCode,
   verifyCode,
   redeemPairing,
   vapidPublicKey: (env) => ({ key: env.vapid.publicKey }),
 }
 
-const AUTHED: Record<string, (env: Env, me: MemberRow, p: Params) => unknown> = {
+export const HOUSEHOLD_AUTHED: Record<string, (env: Env, me: MemberRow, p: Params) => unknown> = {
   me: (_env, me) => publicMember(me),
   signOut: (env, _me, p) => {
     env.store.del('sessions', hash(String(p.token)))
@@ -546,15 +548,3 @@ const AUTHED: Record<string, (env: Env, me: MemberRow, p: Params) => unknown> = 
   testPush: (env, me) => sendToMember(env, me.id, { title: 'Family Trainer', body: 'Notifications are working. 💪', url: '/settings', tag: 'test' }),
 }
 
-export function handle(env: Env, body: Params): { ok: true; data: unknown } | { ok: false; error: string; code: string } {
-  try {
-    const action = String(body.action ?? '')
-    if (PUBLIC[action]) return { ok: true, data: PUBLIC[action](env, body) }
-    if (AUTHED[action]) return { ok: true, data: AUTHED[action](env, caller(env, body.token), body) }
-    throw new ApiError('not_found', `Unknown action "${action}"`)
-  } catch (e) {
-    if (e instanceof ApiError) return { ok: false, error: e.message, code: e.code }
-    console.error(e)
-    return { ok: false, error: 'Something went wrong. Try again.', code: 'server' }
-  }
-}

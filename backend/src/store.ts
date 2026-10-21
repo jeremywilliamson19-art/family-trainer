@@ -11,6 +11,10 @@ export type TableName =
   | 'pairing_codes'
   | 'sessions'
   | 'push_subscriptions'
+  | 'targets'
+  | 'foods'
+  | 'meals'
+  | 'favorites'
 
 export const TABLES: TableName[] = [
   'members',
@@ -22,6 +26,10 @@ export const TABLES: TableName[] = [
   'pairing_codes',
   'sessions',
   'push_subscriptions',
+  'targets',
+  'foods',
+  'meals',
+  'favorites',
 ]
 
 export interface Store {
@@ -72,8 +80,12 @@ export class SheetStore implements Store {
   private load(table: TableName) {
     let t = this.cache.get(table)
     if (t) return t
-    const sheet = this.ss.getSheetByName(table)
-    if (!sheet) throw new Error(`Missing sheet "${table}". Run setup() first.`)
+    // Tabs added in later versions are created on first use.
+    let sheet = this.ss.getSheetByName(table)
+    if (!sheet) {
+      SheetStore.ensureTabs(this.ss)
+      sheet = this.ss.getSheetByName(table)!
+    }
     const rows = new Map<string, { row: number; json: string }>()
     const last = sheet.getLastRow()
     if (last > 1) {

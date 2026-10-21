@@ -16,6 +16,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       devOptions: { enabled: true, type: 'module' },
+      // The USDA food list is precached so search works offline.
+      injectManifest: { globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}', 'foods/*.json'] },
       includeAssets: ['favicon.ico', 'logo.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
         id: base,

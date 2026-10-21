@@ -8,6 +8,9 @@ export function TabBar() {
       <NavLink to="/" end>
         <span aria-hidden>🏠</span>Today
       </NavLink>
+      <NavLink to="/log">
+        <span aria-hidden>🍽️</span>Log
+      </NavLink>
       {member.role === 'admin' && (
         <NavLink to="/admin">
           <span aria-hidden>👨‍👩‍👦</span>Family

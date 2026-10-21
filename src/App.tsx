@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { TabBar } from './components/TabBar'
 import { PushBanner } from './components/PushBanner'
 import { isIOS, isStandalone } from './lib/platform'
@@ -15,6 +15,10 @@ import { NotificationsSetup } from './screens/NotificationsSetup'
 import { Settings } from './screens/Settings'
 import { SignIn } from './screens/SignIn'
 import { Message } from './components/Message'
+import { startNutrition } from './lib/nutritionStore'
+import { Log } from './screens/nutrition/Log'
+import { MealEditor } from './screens/nutrition/MealEditor'
+import { TargetsSetup } from './screens/nutrition/TargetsSetup'
 
 const SKIP_INSTALL_KEY = 'ft:skip-install'
 const PUSH_ONBOARDED_KEY = 'ft:push-onboarded'
@@ -36,8 +40,13 @@ function write(key: string) {
 
 export default function App() {
   const { status, error, member, signOut } = useSession()
+  const location = useLocation()
   const [skipInstall, setSkipInstall] = useState(() => read(SKIP_INSTALL_KEY))
   const [pushOnboarded, setPushOnboarded] = useState(() => read(PUSH_ONBOARDED_KEY))
+
+  useEffect(() => {
+    if (member) startNutrition(member.id)
+  }, [member])
 
   useEffect(() => {
     if (status !== 'ready') return
@@ -102,6 +111,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/log" element={<Log />} />
+          <Route path="/meal/new" element={<MealEditor key={location.search} />} />
+          <Route path="/meal/:id" element={<MealEditor />} />
+          {member?.role !== 'child' && <Route path="/targets" element={<TargetsSetup />} />}
           {member?.role === 'admin' && (
             <>
               <Route path="/admin" element={<Admin />} />

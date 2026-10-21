@@ -4,7 +4,8 @@ import { ScheduleEditor } from '../components/ScheduleEditor'
 import { SportPicker } from '../components/SportPicker'
 import { Toggle } from '../components/Toggle'
 import { api } from '../lib/api'
-import type { ChildGuardianSettings, Member, MemberPrivate, MemberSettings } from '../lib/types'
+import { dayTotals, localDate } from '../lib/nutrition'
+import type { ChildGuardianSettings, ChildTargets, Meal, Member, MemberPrivate, MemberSettings } from '../lib/types'
 import { useRow } from '../lib/useRow'
 
 function PairingCode({ childId }: { childId: string }) {
@@ -22,6 +23,7 @@ function PairingCode({ childId }: { childId: string }) {
     setError(null)
     try {
       setCode(await api<{ code: string; expires_at: string }>('createPairingCode', { child_id: childId }))
+      setNow(Date.now())
     } catch (e) {
       setError((e as Error).message)
     }
@@ -73,6 +75,28 @@ function useChild(id: string) {
   return { row, save, error }
 }
 
+/** The parent's view of the son's protein today. */
+function ChildProteinToday({ childId }: { childId: string }) {
+  const [data, setData] = useState<{ eaten: number; target: number | null } | null>(null)
+  useEffect(() => {
+    const today = localDate()
+    Promise.all([api<Meal[]>('listMeals', { member_id: childId, from: today, to: today }), api<ChildTargets | null>('getTargets', { member_id: childId })]).then(
+      ([meals, t]) => setData({ eaten: dayTotals(meals).protein, target: t?.protein_g ?? null }),
+      () => {},
+    )
+  }, [childId])
+  if (!data) return null
+  return (
+    <section className="card">
+      <h2>Protein today</h2>
+      <p>
+        <strong>{Math.round(data.eaten)}</strong>
+        {data.target !== null && <span className="muted"> / {data.target} g</span>}
+      </p>
+    </section>
+  )
+}
+
 /** Number input that saves on blur. */
 function NumberField({ label, value, step = 1, onSave }: { label: string; value: number | null; step?: number; onSave: (n: number) => void }) {
   const [v, setV] = useState(value?.toString() ?? '')
@@ -110,6 +134,8 @@ export function ChildDetail() {
       </Link>
       <h1>{k.display_name}</h1>
       {error && <p className="error">{error}</p>}
+
+      <ChildProteinToday childId={k.id} />
 
       <section className="card">
         <h2>Sign in his phone</h2>
