@@ -75,8 +75,11 @@ export function SignIn() {
           <button className="btn" disabled={busy}>
             {busy ? 'Sending…' : 'Email me a code'}
           </button>
+          <button type="button" className="btn link" disabled={!email.includes('@')} onClick={() => { setCode(''); setMode('code') }}>
+            I already have an email code
+          </button>
           <button type="button" className="btn link" onClick={() => { setCode(''); setMode('pairing') }}>
-            I have a pairing code
+            Kid’s phone? Use a pairing code from a parent
           </button>
         </form>
       )}
@@ -109,7 +112,10 @@ export function SignIn() {
 
       {mode === 'pairing' && (
         <form onSubmit={redeemPairing} className="stack">
-          <p className="muted">Ask a parent to open Family → your name → Generate pairing code.</p>
+          <p className="muted">
+            For a kid’s phone. Ask a parent to open Family → your name → Generate pairing code. It’s 8 letters and
+            numbers.
+          </p>
           <input
             className="code-input"
             autoFocus
@@ -123,6 +129,9 @@ export function SignIn() {
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             aria-label="Pairing code"
           />
+          {/^\d{6}$/.test(code) && (
+            <p className="error">That looks like a 6-digit email code. Tap “Sign in with email instead” below.</p>
+          )}
           <button className="btn" disabled={busy}>
             {busy ? 'Checking…' : 'Connect'}
           </button>
