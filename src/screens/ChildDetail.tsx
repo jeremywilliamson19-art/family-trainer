@@ -122,6 +122,9 @@ function ChildTraining({ childId }: { childId: string }) {
           </button>
         </>
       )}
+      <Link to={`/tests?who=${childId}`} className="btn secondary">
+        ⚡ Speed &amp; jump tests
+      </Link>
       {recent.length > 0 && (
         <>
           <h3>Check his form</h3>

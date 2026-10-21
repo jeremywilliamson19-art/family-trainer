@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { normalizeBarcode } from '../../lib/barcode'
+import { normalizeBarcode } from '../../lib/barcodeCodes'
 import { lookupBarcode, searchBranded, searchUsda } from '../../lib/foods'
 import { mealName, recentFoods, sumTotals } from '../../lib/nutrition'
 import { mutate, newId, useNutrition } from '../../lib/nutritionStore'

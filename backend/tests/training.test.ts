@@ -117,3 +117,42 @@ describe('workouts', () => {
     expect(() => call('saveWorkout', { workout: workout('x', dadId, { location: 'moon' as never }) }, dad)).toThrow(/gym or home/)
   })
 })
+
+describe('speed & jump tests', () => {
+  const rec = (rid: string, member_id: string, extra: Record<string, unknown> = {}) => ({
+    id: rid,
+    member_id,
+    test: 'vertical',
+    date: '2026-10-21',
+    value: 12.1,
+    capture_fps: 240,
+    file_fps: 240,
+    marks: { takeoff: 1000, landing: 1120 },
+    thumbnail: 'data:image/jpeg;base64,/9j/AAAA',
+    findings: [{ id: 'stiff_landing', kind: 'focus', title: 'Stiff landing', detail: 'x' }],
+    drills: ['snap_down'],
+    ...extra,
+  })
+
+  it('a parent records the son’s test; he sees it; others don’t', () => {
+    call('saveTest', { record: rec('t1', kidId) }, dad)
+    expect(call('trainingSync', {}, kid).tests).toHaveLength(1)
+    expect(call('trainingSync', {}, dad).tests).toHaveLength(0)
+    expect(() => call('trainingSync', { member_id: kidId }, mom)).toThrow(/forbidden/)
+    expect(() => call('deleteTest', { id: 't1' }, mom)).toThrow(/forbidden/)
+  })
+
+  it('never stores video; oversized or non-JPEG thumbnails are dropped', () => {
+    call('saveTest', { record: rec('t2', dadId, { thumbnail: 'data:image/jpeg;base64,' + 'A'.repeat(30_000), video: 'blob:...' }) }, dad)
+    const t = call('trainingSync', {}, dad).tests[0]
+    expect(t.thumbnail).toBeNull()
+    expect(t.video).toBeUndefined()
+    call('saveTest', { record: rec('t3', dadId, { thumbnail: 'data:text/html;base64,PHNjcmlwdD4=' }) }, dad)
+    expect(call('trainingSync', {}, dad).tests.find((x: { id: string }) => x.id === 't3').thumbnail).toBeNull()
+  })
+
+  it('rejects impossible results', () => {
+    expect(() => call('saveTest', { record: rec('t4', dadId, { test: 'sprint10', value: 0.1 }) }, dad)).toThrow(/time/)
+    expect(() => call('saveTest', { record: rec('t4', dadId, { test: 'moonwalk' }) }, dad)).toThrow(/Unknown test/)
+  })
+})

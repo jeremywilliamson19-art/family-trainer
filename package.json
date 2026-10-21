@@ -17,13 +17,15 @@
     "dev:api": "esbuild backend/dev-server.ts --bundle --platform=node --format=esm --outfile=backend/dist/dev-server.mjs --log-level=warning && node backend/dist/dev-server.mjs"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "0.10.35",
     "@zxing/library": "^0.23.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
     "workbox-core": "^7.4.1",
     "workbox-precaching": "^7.4.1",
-    "workbox-routing": "^7.4.1"
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "7.4.1"
   },
   "devDependencies": {
     "@google/clasp": "^3.4.1",

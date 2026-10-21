@@ -2,6 +2,7 @@
 import { clientsClaim } from 'workbox-core'
 import { createHandlerBoundToURL, precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
+import { CacheFirst } from 'workbox-strategies'
 
 declare const self: ServiceWorkerGlobalScope
 
@@ -13,6 +14,8 @@ cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
 // Serve the app shell for any in-app URL so it opens offline.
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
+// The body-tracking runtime and model (~20 MB) download on first use, then stay cached.
+registerRoute(({ url }) => /\/(mediapipe|models)\//.test(url.pathname), new CacheFirst({ cacheName: 'pose-model-v1' }))
 
 interface PushPayload {
   title?: string

@@ -4,13 +4,15 @@ import { useSyncExternalStore } from 'react'
 import { api } from './api'
 import { addDays, localDate } from './nutrition'
 import { createSyncStore, type SyncMeta } from './syncStore'
-import type { Program, Workout } from './types'
+import type { Program, TestRecord, Workout } from './types'
 
 export type TrainingOp =
   | { type: 'saveProgram'; program: Program }
   | { type: 'deleteProgram'; id: string }
   | { type: 'saveWorkout'; workout: Workout }
   | { type: 'deleteWorkout'; id: string }
+  | { type: 'saveTest'; record: TestRecord }
+  | { type: 'deleteTest'; id: string }
 
 export interface YouthLimits {
   in_season: boolean
@@ -20,6 +22,7 @@ export interface YouthLimits {
 interface TrainingData {
   programs: Program[]
   workouts: Workout[]
+  tests: TestRecord[]
   /** Set for the son's account (from the parent's settings). */
   limits: YouthLimits | null
   loaded: boolean
@@ -34,7 +37,7 @@ const upsert = <T extends { id: string }>(list: T[], row: T) => [...list.filter(
 
 const store = createSyncStore<TrainingData, TrainingOp>({
   name: 'ft:training',
-  empty: { programs: [], workouts: [], limits: null, loaded: false },
+  empty: { programs: [], workouts: [], tests: [], limits: null, loaded: false },
   apply(s, op) {
     switch (op.type) {
       case 'saveProgram':
@@ -45,6 +48,10 @@ const store = createSyncStore<TrainingData, TrainingOp>({
         return { workouts: upsert(s.workouts, op.workout) }
       case 'deleteWorkout':
         return { workouts: s.workouts.filter((w) => w.id !== op.id) }
+      case 'saveTest':
+        return { tests: upsert(s.tests, op.record) }
+      case 'deleteTest':
+        return { tests: s.tests.filter((t) => t.id !== op.id) }
     }
   },
   send(op) {
@@ -57,6 +64,10 @@ const store = createSyncStore<TrainingData, TrainingOp>({
         return api('saveWorkout', { workout: op.workout })
       case 'deleteWorkout':
         return api('deleteWorkout', { id: op.id })
+      case 'saveTest':
+        return api('saveTest', { record: op.record })
+      case 'deleteTest':
+        return api('deleteTest', { id: op.id })
     }
   },
   pull: async () => ({ ...(await api<Omit<TrainingData, 'loaded'>>('trainingSync', { from: addDays(localDate(), -HISTORY_DAYS) })), loaded: true }),

@@ -151,6 +151,25 @@ export const EXERCISES: Exercise[] = [
   E({ id: 'med_ball_slam', name: 'Med ball slam', kind: 'plyo', primary: ['core', 'back'], needs: ['medball'], load: 'bodyweight', youth: true }),
   E({ id: 'med_ball_rotational_throw', name: 'Med ball rotational throw', kind: 'plyo', primary: ['core'], needs: ['medball'], load: 'bodyweight', youth: true }),
 
+  // ---- Drills suggested by form analysis (youth-safe)
+  E({ id: 'a_march', name: 'A-march', kind: 'sprint', primary: ['quads', 'core'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'yd' }),
+  E({ id: 'b_skip', name: 'B-skips', kind: 'sprint', primary: ['hamstrings'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'yd' }),
+  E({ id: 'butt_kick', name: 'Butt kicks', kind: 'sprint', primary: ['hamstrings'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'yd' }),
+  E({ id: 'wicket_run', name: 'Wicket runs (mini hurdles)', kind: 'sprint', primary: ['hamstrings', 'quads'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'yd' }),
+  E({ id: 'fast_leg', name: 'Fast-leg drill', kind: 'sprint', primary: ['hamstrings'], needs: ['none'], load: 'bodyweight', youth: true }),
+  E({ id: 'falling_start', name: 'Falling starts', kind: 'sprint', primary: ['quads', 'glutes'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'yd' }),
+  E({ id: 'three_point_start', name: 'Stance and start (3-point)', kind: 'sprint', primary: ['quads', 'glutes'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'yd' }),
+  E({ id: 'arm_swing_drill', name: 'Seated arm-swing drill', kind: 'sprint', primary: ['shoulders'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'sec' }),
+  E({ id: 'squat_to_stick', name: 'Jump and stick (full dip)', kind: 'plyo', primary: ['quads', 'glutes'], needs: ['none'], load: 'bodyweight', youth: true, contacts: 1 }),
+  E({ id: 'jump_and_reach', name: 'Jump and reach', kind: 'plyo', primary: ['quads', 'glutes', 'calves'], needs: ['none'], load: 'bodyweight', youth: true, contacts: 1 }),
+  E({ id: 'med_ball_scoop_toss', name: 'Med ball scoop toss', kind: 'plyo', primary: ['glutes', 'hamstrings'], needs: ['medball'], load: 'bodyweight', youth: true }),
+  E({ id: 'band_walk', name: 'Lateral band walk', kind: 'strength', primary: ['glutes'], needs: ['bands'], load: 'bodyweight', youth: true }),
+  E({ id: 'single_leg_bridge', name: 'Single-leg glute bridge', kind: 'strength', primary: ['glutes', 'hamstrings'], needs: ['none'], load: 'bodyweight', youth: true }),
+  E({ id: 'jump_cut', name: 'Jump cuts', kind: 'plyo', primary: ['quads', 'glutes'], needs: ['none'], load: 'bodyweight', youth: true, contacts: 2 }),
+  E({ id: 'cone_weave', name: 'Cone weave', kind: 'sprint', primary: ['quads', 'calves'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'yd' }),
+  E({ id: 'lateral_shuffle', name: 'Lateral shuffle and plant', kind: 'sprint', primary: ['glutes', 'quads'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'yd' }),
+  E({ id: 'ladder_drill', name: 'Agility ladder footwork', kind: 'sprint', primary: ['calves'], needs: ['none'], load: 'bodyweight', youth: true, unit: 'sec' }),
+
   // ---- Conditioning
   E({ id: 'incline_walk', name: 'Incline treadmill walk', kind: 'conditioning', primary: [], needs: ['gym'], load: 'bodyweight', unit: 'min' }),
   E({ id: 'bike_intervals', name: 'Bike intervals', kind: 'conditioning', primary: [], needs: ['gym'], load: 'bodyweight', unit: 'min' }),

@@ -2,7 +2,7 @@
 // guardrails that matter for safety are enforced here too, not only in the
 // app: only a parent edits the son's program, his prescribed effort is
 // capped at RPE 8, and only a parent can mark his form "good".
-import type { ChildGuardianSettings, LoggedExercise, Program, ProgramDay, Workout } from '../../src/lib/types'
+import type { ChildGuardianSettings, LoggedExercise, Program, ProgramDay, TestRecord, Workout } from '../../src/lib/types'
 import { ApiError, canManage, iso, num, text, type Env, type MemberRow, type Params } from './api'
 
 const ID_RE = /^[\w:.-]{1,80}$/
@@ -165,6 +165,58 @@ function listWorkouts(env: Env, me: MemberRow, p: Params) {
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
+const TEST_IDS = ['vertical', 'broad', 'sprint10', 'dash40', 'pro_agility', 'three_cone'] as const
+// Sheets cells hold 50,000 characters; keep the whole row well under that.
+const MAX_THUMB = 20_000
+
+function saveTest(env: Env, me: MemberRow, p: Params) {
+  const raw = (p.record ?? {}) as Record<string, unknown>
+  const tid = id(raw.id, 'test')
+  const target = canManage(env, me, String(raw.member_id ?? me.id))
+  const existing = env.store.get<TestRecord>('tests', tid)
+  if (existing && existing.member_id !== target.id) throw new ApiError('forbidden', 'Not allowed')
+  if (!TEST_IDS.includes(raw.test as never)) throw new ApiError('invalid', 'Unknown test')
+  const date = String(raw.date ?? '')
+  if (!DATE_RE.test(date)) throw new ApiError('invalid', 'Bad date')
+  const isTime = raw.test !== 'vertical' && raw.test !== 'broad'
+  const marks: Record<string, number> = {}
+  for (const [k, v] of Object.entries((raw.marks ?? {}) as Record<string, unknown>).slice(0, 6)) {
+    if (/^\w{1,20}$/.test(k)) marks[k] = num(v, 0, 10_000_000, 'frame')
+  }
+  const thumb = typeof raw.thumbnail === 'string' && raw.thumbnail.startsWith('data:image/jpeg;base64,') && raw.thumbnail.length <= MAX_THUMB ? raw.thumbnail : null
+  const findings = (Array.isArray(raw.findings) ? raw.findings : []).slice(0, 12).map((f) => {
+    const x = f as Record<string, unknown>
+    const kind = x.kind === 'good' || x.kind === 'note' ? x.kind : 'focus'
+    return { id: String(x.id ?? '').slice(0, 40), kind, title: String(x.title ?? '').slice(0, 100), detail: String(x.detail ?? '').slice(0, 400) } as TestRecord['findings'][number]
+  })
+  env.store.put<TestRecord>('tests', tid, {
+    id: tid,
+    member_id: target.id,
+    test: raw.test as TestRecord['test'],
+    date,
+    value: isTime ? num(raw.value, 0.5, 60, 'time') : num(raw.value, 1, 200, 'distance'),
+    split10: raw.split10 == null ? null : num(raw.split10, 0.3, 10, 'split'),
+    mph: raw.mph == null ? null : num(raw.mph, 0, 40, 'speed'),
+    split_mph: raw.split_mph == null ? null : num(raw.split_mph, 0, 40, 'speed'),
+    capture_fps: raw.capture_fps == null ? null : num(raw.capture_fps, 1, 1000, 'frame rate'),
+    file_fps: raw.file_fps == null ? null : num(raw.file_fps, 1, 1000, 'frame rate'),
+    marks,
+    thumbnail: thumb,
+    findings,
+    drills: (Array.isArray(raw.drills) ? raw.drills : []).slice(0, 12).map((d) => id(d, 'drill')),
+    ...(raw.notes ? { notes: String(raw.notes).slice(0, 300) } : {}),
+  })
+  return { ok: true }
+}
+
+function deleteTest(env: Env, me: MemberRow, p: Params) {
+  const t = env.store.get<TestRecord>('tests', String(p.id ?? ''))
+  if (!t) return { ok: true }
+  canManage(env, me, t.member_id)
+  env.store.del('tests', t.id)
+  return { ok: true }
+}
+
 /** The son's limits, set by the parent (in-season, foot-contact cap). */
 function youthLimits(env: Env, member: MemberRow) {
   if (member.role !== 'child') return null
@@ -178,6 +230,7 @@ function trainingSync(env: Env, me: MemberRow, p: Params) {
   return {
     programs: env.store.all<Program>('programs').filter((x) => x.member_id === target.id),
     workouts: listWorkouts(env, me, { member_id: target.id, from: p.from }),
+    tests: env.store.all<TestRecord>('tests').filter((t) => t.member_id === target.id),
     limits: youthLimits(env, target),
   }
 }
@@ -188,6 +241,8 @@ export const TRAINING_AUTHED: Record<string, (env: Env, me: MemberRow, p: Params
   saveWorkout,
   deleteWorkout,
   setFormGood,
+  saveTest,
+  deleteTest,
   listWorkouts,
   trainingSync,
 }

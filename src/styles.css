@@ -1032,3 +1032,166 @@ input[type='search'] {
   font-weight: 600;
   padding: 8px 0;
 }
+
+/* Speed & jump tests */
+.tests-link {
+  color: inherit;
+  text-decoration: none;
+}
+.test-diagram {
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+  border-radius: 10px;
+}
+.test-diagram .cone {
+  fill: #f97316;
+}
+.test-diagram .lane {
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+.test-diagram .arrow,
+.test-diagram .route {
+  stroke: var(--accent);
+  stroke-width: 2;
+  fill: none;
+  stroke-dasharray: 5 4;
+}
+.test-diagram .phone {
+  fill: var(--text);
+}
+.test-diagram .athlete {
+  fill: var(--accent);
+}
+.test-diagram .dlabel {
+  fill: var(--muted);
+  font-size: 11px;
+}
+.file-btn {
+  position: relative;
+}
+.fps-row {
+  min-height: 0;
+}
+.fps-row select {
+  width: auto;
+  min-height: 34px;
+  font-size: 15px;
+}
+.marker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.player {
+  position: relative;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.player video {
+  width: 100%;
+  display: block;
+  max-height: 60vh;
+  object-fit: contain;
+}
+.player canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.frame-row {
+  min-height: 0;
+}
+input[type='range'] {
+  width: 100%;
+  min-height: 36px;
+  padding: 0;
+  accent-color: var(--accent);
+}
+.step-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.mark-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mark-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.mark-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+.result-card {
+  text-align: center;
+}
+.big-result {
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.finding {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--bg);
+}
+.finding input {
+  margin-top: 4px;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.drill {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.test-head {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+}
+.test-record {
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.test-record img {
+  width: 72px;
+  height: auto;
+  border-radius: 8px;
+  flex: none;
+  align-self: flex-start;
+}
+.player.tap-mode {
+  cursor: crosshair;
+  box-shadow: 0 0 0 3px #f59e0b;
+}
+.tap-prompt {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 15px;
+  margin: 0;
+}

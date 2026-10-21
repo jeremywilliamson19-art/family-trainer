@@ -21,6 +21,8 @@ import { ChooseProgram, TrainHome } from './screens/training/TrainHome'
 import { WorkoutLogger } from './screens/training/WorkoutLogger'
 import { WorkoutView } from './screens/training/WorkoutView'
 import { ProgramEditor } from './screens/training/ProgramEditor'
+import { TestFlow } from './screens/tests/TestFlow'
+import { TestsHome } from './screens/tests/TestsHome'
 import { Log } from './screens/nutrition/Log'
 import { NutritionDetail } from './screens/nutrition/NutritionDetail'
 import { MealEditor } from './screens/nutrition/MealEditor'
@@ -124,6 +126,8 @@ export default function App() {
           <Route path="/train" element={<TrainHome />} />
           <Route path="/train/workout" element={<WorkoutLogger />} />
           <Route path="/train/log/:id" element={<WorkoutView />} />
+          <Route path="/tests" element={<TestsHome />} />
+          <Route path="/tests/new/:test" element={<TestFlow />} />
           <Route path="/train/program/:id" element={<ProgramEditor />} />
           {member?.role !== 'child' && member && <Route path="/train/choose" element={<ChooseProgram memberId={member.id} />} />}
           <Route path="/meal/new" element={<MealEditor key={location.search} />} />

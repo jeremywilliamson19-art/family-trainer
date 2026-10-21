@@ -180,3 +180,29 @@ export interface Workout {
   exercises: LoggedExercise[]
   notes?: string
 }
+
+// ---------------------------------------------------------------------------
+// Speed & jump tests (filmed)
+// ---------------------------------------------------------------------------
+
+export interface TestRecord {
+  id: string
+  member_id: string
+  test: 'vertical' | 'broad' | 'sprint10' | 'dash40' | 'pro_agility' | 'three_cone'
+  date: string
+  /** Inches (jumps) or seconds (runs). */
+  value: number
+  split10?: number | null
+  mph?: number | null
+  split_mph?: number | null
+  /** Frame rate the clip was captured at (used for timing) and the file's own rate. */
+  capture_fps: number | null
+  file_fps: number | null
+  marks: Record<string, number>
+  /** Small JPEG data URL of the key frame. The video itself never leaves the phone. */
+  thumbnail: string | null
+  /** Form findings the parent kept, and drills suggested from them. */
+  findings: { id: string; kind: 'focus' | 'good' | 'note'; title: string; detail: string }[]
+  drills: string[]
+  notes?: string
+}

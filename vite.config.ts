@@ -16,8 +16,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       devOptions: { enabled: true, type: 'module' },
-      // The USDA food list is precached so search works offline.
-      injectManifest: { globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}', 'foods/*.json'] },
+      // The USDA food list is precached so search works offline. The pose
+      // model (~20 MB) is cached on first use instead (see sw.ts).
+      injectManifest: { globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}', 'foods/*.json'], globIgnores: ['mediapipe/**', 'models/**'] },
       includeAssets: ['favicon.ico', 'logo.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
         id: base,

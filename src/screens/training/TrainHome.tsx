@@ -150,6 +150,14 @@ export function TrainHome() {
         </button>
       </section>
 
+      <Link to="/tests" className="card row link-row tests-link">
+        <span>
+          <strong>⚡ Speed &amp; jump tests</strong>
+          <small className="muted block">Film a sprint or jump; get the time, speed, height and a form check with drills</small>
+        </span>
+        <span className="muted">›</span>
+      </Link>
+
       {!youth && (
         <section className="card stack">
           <h2>This week</h2>
