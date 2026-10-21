@@ -7,3 +7,4 @@ supabase/.temp
 .DS_Store
 .env.mock
 backend/dist
+*.tsbuildinfo
