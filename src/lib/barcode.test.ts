@@ -16,7 +16,18 @@ function ean13Modules(code: string): string {
   return bits + '101'
 }
 
+// Seeded noise so the test is the same every run (mulberry32).
+function rng(seed: number) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
 function render(code: string, { module = 3, quiet = 12, height = 80, rotate = false, noise = 0 } = {}) {
+  const rand = rng(42)
   const bits = ean13Modules(code)
   const w0 = (bits.length + quiet * 2) * module
   const [w, h] = rotate ? [height, w0] : [w0, height]
@@ -26,7 +37,7 @@ function render(code: string, { module = 3, quiet = 12, height = 80, rotate = fa
       const along = rotate ? y : x
       const m = Math.floor(along / module) - quiet
       let v = m >= 0 && m < bits.length && bits[m] === '1' ? 20 : 235
-      v = Math.max(0, Math.min(255, v + (Math.random() - 0.5) * noise))
+      v = Math.max(0, Math.min(255, v + (rand() - 0.5) * noise))
       const i = (y * w + x) * 4
       data[i] = data[i + 1] = data[i + 2] = v
       data[i + 3] = 255
