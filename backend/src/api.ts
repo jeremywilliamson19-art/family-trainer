@@ -211,7 +211,7 @@ function requestCode(env: Env, p: { email?: unknown }) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new ApiError('invalid', 'Enter a valid email')
   const allowed = email === env.adminEmail || !!memberByEmail(env, email) || !!env.store.get('invites', email)
   if (!allowed) {
-    throw new ApiError('forbidden', 'This app is private to one family. Ask Jeremy to add this email, then try again.')
+    throw new ApiError('forbidden', `${email} isn’t on the family list. Check for a typo, or ask Jeremy to add it.`)
   }
   const prev = env.store.get<LoginCode>('login_codes', email)
   if (prev && env.now() - prev.sent_at < RESEND_GAP) {
