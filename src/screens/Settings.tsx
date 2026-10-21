@@ -5,14 +5,14 @@ import { Equipment } from '../components/Equipment'
 import { ScheduleEditor } from '../components/ScheduleEditor'
 import { Toggle } from '../components/Toggle'
 import { useMember, useSession } from '../lib/session'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 import type { MemberSettings } from '../lib/types'
 import { useRow } from '../lib/useRow'
 
 export function Settings() {
   const member = useMember()
   const { reload, signOut } = useSession()
-  const { row: s, save, error } = useRow<MemberSettings>('member_settings', 'member_id', member.id)
+  const { row: s, save, error } = useRow<MemberSettings>('getSettings', 'saveSettings', {})
   const [name, setName] = useState(member.display_name)
   const isChild = member.role === 'child'
 
@@ -23,7 +23,7 @@ export function Settings() {
   const saveName = async () => {
     const v = name.trim()
     if (!v || v === member.display_name) return
-    await supabase.from('members').update({ display_name: v }).eq('id', member.id)
+    await api('updateMember', { patch: { display_name: v } })
     reload()
   }
 

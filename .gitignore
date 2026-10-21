@@ -6,3 +6,4 @@ dev-dist
 supabase/.temp
 .DS_Store
 .env.mock
+backend/dist

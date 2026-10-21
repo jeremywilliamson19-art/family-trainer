@@ -32,8 +32,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title ?? 'Family Trainer', {
       body: data.body ?? '',
       tag: data.tag,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-64x64.png',
+      icon: 'pwa-192x192.png',
+      badge: 'pwa-64x64.png',
       data: { url: data.url ?? '/' },
     }),
   )
@@ -41,7 +41,9 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = new URL((event.notification.data?.url as string) ?? '/', self.location.origin).href
+  // Server paths like "/settings" are relative to wherever the app lives.
+  const path = String(event.notification.data?.url ?? '/').replace(/^\//, '')
+  const url = new URL(path, self.registration.scope).href
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })

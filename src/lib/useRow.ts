@@ -1,41 +1,34 @@
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from './supabase'
+import { api } from './api'
 
 /**
- * Loads one row by key and saves partial updates optimistically.
- * Used for the per-member settings tables.
+ * Loads one record through a get action and saves partial updates
+ * optimistically through the matching save action.
  */
-export function useRow<T extends object>(table: string, keyColumn: string, keyValue: string | undefined) {
+export function useRow<T extends object>(getAction: string, saveAction: string, params: Record<string, unknown> | null) {
   const [row, setRow] = useState<T | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const key = JSON.stringify(params)
 
   useEffect(() => {
-    if (!keyValue) return
-    supabase
-      .from(table)
-      .select('*')
-      .eq(keyColumn, keyValue)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) setError(error.message)
-        else setRow(data as T | null)
-      })
-  }, [table, keyColumn, keyValue])
+    if (!params) return
+    api<T>(getAction, params).then(setRow, (e) => setError((e as Error).message))
+  }, [getAction, key])
 
   const save = useCallback(
     async (patch: Partial<T>) => {
-      if (!keyValue) return
+      if (!params) return
       const before = row
       setRow((r) => (r ? { ...r, ...patch } : r))
-      const { error } = await supabase.from(table).update(patch as never).eq(keyColumn, keyValue)
-      if (error) {
-        setRow(before)
-        setError(error.message)
-      } else {
+      try {
+        setRow(await api<T>(saveAction, { ...params, patch }))
         setError(null)
+      } catch (e) {
+        setRow(before)
+        setError((e as Error).message)
       }
     },
-    [table, keyColumn, keyValue, row],
+    [saveAction, key, row],
   )
 
   return { row, save, error }

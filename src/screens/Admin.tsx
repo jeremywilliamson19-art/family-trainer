@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useMember } from '../lib/session'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 import type { Member } from '../lib/types'
 
 interface Invite {
-  id: string
   email: string
   display_name: string | null
   created_at: string
@@ -23,12 +22,13 @@ export function Admin() {
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
-    const [m, i] = await Promise.all([
-      supabase.from('members').select('*').order('created_at'),
-      supabase.from('household_invites').select('id, email, display_name, created_at').is('accepted_at', null),
-    ])
-    setMembers((m.data ?? []) as Member[])
-    setInvites((i.data ?? []) as Invite[])
+    try {
+      const [m, i] = await Promise.all([api<Member[]>('listMembers'), api<Invite[]>('listInvites')])
+      setMembers(m)
+      setInvites(i)
+    } catch (e) {
+      setError((e as Error).message)
+    }
   }, [])
 
   useEffect(() => {
@@ -39,19 +39,21 @@ export function Admin() {
     e.preventDefault()
     setBusy(true)
     setError(null)
-    const { error } = await supabase.rpc('invite_member', { p_email: email, p_display_name: name })
-    setBusy(false)
-    if (error) {
-      setError(error.message.includes('duplicate') ? 'That email already has an invite.' : error.message)
+    try {
+      await api('invite', { email, display_name: name })
+    } catch (e) {
+      setError((e as Error).message)
       return
+    } finally {
+      setBusy(false)
     }
     setEmail('')
     setName('')
     load()
   }
 
-  const revoke = async (id: string) => {
-    await supabase.from('household_invites').delete().eq('id', id)
+  const revoke = async (email: string) => {
+    await api('revokeInvite', { email }).catch((e) => setError((e as Error).message))
     load()
   }
 
@@ -110,12 +112,12 @@ export function Admin() {
             <h3>Waiting to sign in</h3>
             <ul className="list">
               {invites.map((i) => (
-                <li key={i.id} className="row">
+                <li key={i.email} className="row">
                   <span>
                     {i.display_name ?? i.email}
                     {i.display_name && <small className="muted block">{i.email}</small>}
                   </span>
-                  <button className="btn small secondary" onClick={() => revoke(i.id)}>
+                  <button className="btn small secondary" onClick={() => revoke(i.email)}>
                     Remove
                   </button>
                 </li>

@@ -1,6 +1,6 @@
 # Installing the Family Trainer App
 
-App address: **[APP URL]** (fill in after the Vercel deploy, see SETUP.md step 4)
+App address: **https://jeremywilliamson19-art.github.io/family-trainer/**
 
 Requirements for every iPhone:
 
@@ -13,7 +13,7 @@ You must be the first person to sign in. The first account becomes the household
 
 ### A. Install on your iPhone
 
-1. Open Safari and go to [APP URL].
+1. Open Safari and go to https://jeremywilliamson19-art.github.io/family-trainer/.
 2. Tap the Share button (the square with an up arrow, at the bottom of the screen).
 3. Scroll down and tap **Add to Home Screen**. If you see **Open as Web App**, make sure it's on. Tap **Add**.
 4. Close Safari. From now on, always open the app from the home-screen icon, not from Safari.
@@ -43,7 +43,7 @@ You must be the first person to sign in. The first account becomes the household
 
 ### A. On her iPhone
 
-1. Open Safari and go to [APP URL].
+1. Open Safari and go to https://jeremywilliamson19-art.github.io/family-trainer/.
 2. Tap Share → **Add to Home Screen** → **Add**.
 3. Close Safari and open the app from the home-screen icon.
 4. Enter the email Jeremy added. Type the 6-digit code from the email.
@@ -52,7 +52,7 @@ You must be the first person to sign in. The first account becomes the household
 
 ### B. On a laptop (easiest for entering recipes)
 
-1. Open any browser (Safari, Chrome, Edge) and go to [APP URL].
+1. Open any browser (Safari, Chrome, Edge) and go to https://jeremywilliamson19-art.github.io/family-trainer/.
 2. Sign in with her email and the 6-digit code.
 3. Bookmark the page. There's nothing to install. Recipes she saves here show up on everyone's phones right away.
 4. To import a recipe from a website: Recipes → Import from link → paste the address → confirm the ingredients.
@@ -65,13 +65,13 @@ Do this together, with his phone in your hand.
 
 If his phone uses Screen Time, make these changes on his phone, or from your phone under Family:
 
-1. Settings → Screen Time → Content & Privacy Restrictions → App Store, Media, Web & Games → Web Content. If it's set to "Limit Adult Websites" or "Only Approved Websites", add [APP URL] to the Always Allow list.
+1. Settings → Screen Time → Content & Privacy Restrictions → App Store, Media, Web & Games → Web Content. If it's set to "Limit Adult Websites" or "Only Approved Websites", add https://jeremywilliamson19-art.github.io/family-trainer/ to the Always Allow list.
 2. Make sure Safari isn't blocked under Allowed Apps.
 3. If he has app time limits, add the trainer app to Always Allowed after it's installed, so reminders aren't blocked.
 
 ### B. Install
 
-1. On his phone, open Safari and go to [APP URL].
+1. On his phone, open Safari and go to https://jeremywilliamson19-art.github.io/family-trainer/.
 2. Tap Share → **Add to Home Screen** → **Add**.
 3. Close Safari and open the app from the home-screen icon.
 4. Tap **I have a pairing code**.

@@ -1,72 +1,86 @@
-import type { Session } from '@supabase/supabase-js'
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { supabase } from './supabase'
+import { api, getToken, setToken } from './api'
 import type { Member } from './types'
 
-type Status = 'loading' | 'signed-out' | 'not-invited' | 'ready' | 'error'
+type Status = 'loading' | 'signed-out' | 'ready' | 'error'
 
 interface SessionValue {
   status: Status
-  session: Session | null
   member: Member | null
   error: string | null
   reload: () => Promise<void>
+  signIn: (token: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
 const Ctx = createContext<SessionValue | null>(null)
+const MEMBER_KEY = 'ft:member'
+
+function cachedMember(): Member | null {
+  try {
+    return JSON.parse(localStorage.getItem(MEMBER_KEY) ?? 'null')
+  } catch {
+    return null
+  }
+}
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [member, setMember] = useState<Member | null>(null)
-  const [status, setStatus] = useState<Status>('loading')
+  // Start from the cached member so the app opens instantly (and offline).
+  const [member, setMember] = useState<Member | null>(() => (getToken() ? cachedMember() : null))
+  const [status, setStatus] = useState<Status>(() => (!getToken() ? 'signed-out' : cachedMember() ? 'ready' : 'loading'))
   const [error, setError] = useState<string | null>(null)
 
-  const loadMember = useCallback(async (s: Session | null) => {
-    setSession(s)
-    if (!s) {
+  const reload = useCallback(async () => {
+    if (!getToken()) {
       setMember(null)
       setStatus('signed-out')
       return
     }
     try {
-      // Joins from an invite (or bootstraps the household) on first sign-in.
-      const { data: joined, error: joinErr } = await supabase.rpc('join_household')
-      if (joinErr) throw joinErr
-      if (joined?.status === 'not_invited') {
-        setMember(null)
-        setStatus('not-invited')
-        return
-      }
-      const { data, error: memErr } = await supabase.from('members').select('*').eq('id', s.user.id).single()
-      if (memErr) throw memErr
-      setMember(data as Member)
+      const m = await api<Member>('me')
+      localStorage.setItem(MEMBER_KEY, JSON.stringify(m))
+      setMember(m)
       setStatus('ready')
     } catch (e) {
+      const code = (e as { code?: string }).code
+      if (code === 'auth') return // handled by the signed-out event
+      // Offline with a cached member: keep going.
+      if (code === 'network' && cachedMember()) return
       setError((e as Error).message)
       setStatus('error')
     }
   }, [])
 
+  const clear = useCallback(() => {
+    setToken(null)
+    try {
+      localStorage.removeItem(MEMBER_KEY)
+    } catch {
+      /* ignore */
+    }
+    setMember(null)
+    setStatus('signed-out')
+  }, [])
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => loadMember(data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      // Token refreshes don't change who is signed in.
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
-        setTimeout(() => loadMember(s), 0)
-      }
-    })
-    return () => sub.subscription.unsubscribe()
-  }, [loadMember])
+    reload()
+    window.addEventListener('ft:signed-out', clear)
+    return () => window.removeEventListener('ft:signed-out', clear)
+  }, [reload, clear])
 
   const value: SessionValue = {
     status,
-    session,
     member,
     error,
-    reload: () => loadMember(session),
+    reload,
+    signIn: async (token) => {
+      setToken(token)
+      setStatus('loading')
+      await reload()
+    },
     signOut: async () => {
-      await supabase.auth.signOut()
+      await api('signOut').catch(() => {})
+      clear()
     },
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
@@ -78,7 +92,7 @@ export function useSession() {
   return v
 }
 
-/** For screens that only render once signed in as a household member. */
+/** For screens that only render once signed in. */
 export function useMember(): Member {
   const { member } = useSession()
   if (!member) throw new Error('useMember before ready')

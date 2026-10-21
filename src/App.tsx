@@ -5,7 +5,7 @@ import { PushBanner } from './components/PushBanner'
 import { isIOS, isStandalone } from './lib/platform'
 import { getPushState, syncPushSubscription } from './lib/push'
 import { useSession } from './lib/session'
-import { isConfigured } from './lib/supabase'
+import { isConfigured } from './lib/api'
 import { Admin } from './screens/Admin'
 import { AddChild } from './screens/AddChild'
 import { ChildDetail } from './screens/ChildDetail'
@@ -54,8 +54,7 @@ export default function App() {
   if (!isConfigured) {
     return (
       <Message title="Not configured yet">
-        Copy <code>.env.example</code> to <code>.env.local</code> and add the Supabase URL and key. See
-        docs/SETUP.md.
+        Set <code>VITE_API_URL</code> to the Apps Script web app address. See docs/SETUP.md.
       </Message>
     )
   }
@@ -81,12 +80,6 @@ export default function App() {
       return (
         <Message title="Couldn't load your account" action={{ label: 'Sign out', onClick: signOut }}>
           {error}
-        </Message>
-      )
-    case 'not-invited':
-      return (
-        <Message title="You're not on the list" action={{ label: 'Sign out', onClick: signOut }}>
-          This app is private to one family. Ask Jeremy to invite this email address, then sign in again.
         </Message>
       )
   }

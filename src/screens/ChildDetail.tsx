@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ScheduleEditor } from '../components/ScheduleEditor'
 import { SportPicker } from '../components/SportPicker'
 import { Toggle } from '../components/Toggle'
-import { supabase } from '../lib/supabase'
+import { api } from '../lib/api'
 import type { ChildGuardianSettings, Member, MemberPrivate, MemberSettings } from '../lib/types'
 import { useRow } from '../lib/useRow'
 
@@ -20,9 +20,11 @@ function PairingCode({ childId }: { childId: string }) {
 
   const generate = async () => {
     setError(null)
-    const { data, error } = await supabase.rpc('create_pairing_code', { p_child_id: childId })
-    if (error) setError(error.message)
-    else setCode(data)
+    try {
+      setCode(await api<{ code: string; expires_at: string }>('createPairingCode', { child_id: childId }))
+    } catch (e) {
+      setError((e as Error).message)
+    }
   }
 
   const left = code ? Math.max(0, Math.floor((new Date(code.expires_at).getTime() - now) / 1000)) : 0
@@ -48,6 +50,29 @@ function PairingCode({ childId }: { childId: string }) {
   )
 }
 
+/** The child's member record, from the household list. */
+function useChild(id: string) {
+  const [row, setRow] = useState<Member | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    api<Member[]>('listMembers').then(
+      (all) => setRow(all.find((m) => m.id === id) ?? null),
+      (e) => setError((e as Error).message),
+    )
+  }, [id])
+  const save = async (patch: Partial<Member>) => {
+    const before = row
+    setRow((r) => (r ? { ...r, ...patch } : r))
+    try {
+      setRow(await api<Member>('updateMember', { member_id: id, patch }))
+    } catch (e) {
+      setRow(before)
+      setError((e as Error).message)
+    }
+  }
+  return { row, save, error }
+}
+
 /** Number input that saves on blur. */
 function NumberField({ label, value, step = 1, onSave }: { label: string; value: number | null; step?: number; onSave: (n: number) => void }) {
   const [v, setV] = useState(value?.toString() ?? '')
@@ -69,10 +94,10 @@ function NumberField({ label, value, step = 1, onSave }: { label: string; value:
 
 export function ChildDetail() {
   const { id } = useParams()
-  const kid = useRow<Member>('members', 'id', id)
-  const body = useRow<MemberPrivate>('member_private', 'member_id', id)
-  const settings = useRow<MemberSettings>('member_settings', 'member_id', id)
-  const guard = useRow<ChildGuardianSettings>('child_guardian_settings', 'child_id', id)
+  const kid = useChild(id!)
+  const body = useRow<MemberPrivate>('getPrivate', 'savePrivate', { member_id: id })
+  const settings = useRow<MemberSettings>('getSettings', 'saveSettings', { member_id: id })
+  const guard = useRow<ChildGuardianSettings>('getGuardian', 'saveGuardian', { child_id: id })
   const error = kid.error ?? body.error ?? settings.error ?? guard.error
 
   if (!kid.row) return <div className="screen">{error ? <p className="error">{error}</p> : <p className="muted">Loading…</p>}</div>

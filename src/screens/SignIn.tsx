@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { callFunction, supabase } from '../lib/supabase'
+import { api } from '../lib/api'
+import { useSession } from '../lib/session'
 
 type Mode = 'email' | 'code' | 'pairing'
 
 export function SignIn() {
+  const { signIn } = useSession()
   const [mode, setModeRaw] = useState<Mode>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -21,8 +23,7 @@ export function SignIn() {
     try {
       await fn()
     } catch (e) {
-      const msg = (e as Error).message
-      setError(/fetch|network|load failed|send a request/i.test(msg) ? 'Can’t reach the server. Check your connection and try again.' : msg)
+      setError((e as Error).message)
     } finally {
       setBusy(false)
     }
@@ -31,8 +32,7 @@ export function SignIn() {
   const sendCode = (e: FormEvent) => {
     e.preventDefault()
     run(async () => {
-      const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } })
-      if (error) throw error
+      await api('requestCode', { email: email.trim() })
       setCode('')
       setMode('code')
     })
@@ -41,17 +41,16 @@ export function SignIn() {
   const verifyCode = (e: FormEvent) => {
     e.preventDefault()
     run(async () => {
-      const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' })
-      if (error) throw new Error('That code didn’t work. Check the newest email, or send a new code.')
+      const { token } = await api<{ token: string }>('verifyCode', { email: email.trim(), code })
+      await signIn(token)
     })
   }
 
   const redeemPairing = (e: FormEvent) => {
     e.preventDefault()
     run(async () => {
-      const { token_hash } = await callFunction<{ token_hash: string }>('pairing-redeem', { code })
-      const { error } = await supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })
-      if (error) throw error
+      const { token } = await api<{ token: string }>('redeemPairing', { code })
+      await signIn(token)
     })
   }
 

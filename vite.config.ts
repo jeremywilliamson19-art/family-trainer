@@ -2,7 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Served from https://<user>.github.io/family-trainer/ on GitHub Pages.
+const base = process.env.BASE_PATH ?? '/family-trainer/'
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -14,12 +18,12 @@ export default defineConfig({
       devOptions: { enabled: true, type: 'module' },
       includeAssets: ['favicon.ico', 'logo.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
-        id: '/',
+        id: base,
         name: 'Family Trainer',
         short_name: 'Trainer',
         description: 'Food, workouts and testing for our family',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#0f172a',

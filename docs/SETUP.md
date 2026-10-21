@@ -1,90 +1,40 @@
-# One-time setup (accounts and deploy)
+# How it's hosted
 
-Everything here is free tier. It takes about 30 minutes. You sign in to each service yourself; Claude Code can run the commands once you're signed in.
+No paid services and no extra accounts: GitHub and Jeremy's Google account only.
 
-Commands below run from the `family-trainer` folder in Terminal. Node is installed in `~/.local/node` (open a new Terminal window if `npx` isn't found).
+| Piece | Where |
+|---|---|
+| App (static PWA) | GitHub Pages: https://jeremywilliamson19-art.github.io/family-trainer/ |
+| Server logic | Google Apps Script project **Family Trainer** (`backend/src`, bundled to `backend/dist/Code.js`) |
+| Data | Google Sheet **Family Trainer Data** in Jeremy's Drive (one tab per table; created by `setup()`) |
+| Sign-in codes | Emailed from Jeremy's Gmail by Apps Script (100 a day) |
+| Push notifications | Sent by Apps Script itself (pure-JS Web Push; VAPID keys live in Script Properties) |
 
-## 1. GitHub repo
+Secrets live only in **Apps Script → Project Settings → Script Properties**: `VAPID_PRIVATE_KEY`, `VAPID_PUBLIC_KEY`, `ADMIN_EMAIL` and `SHEET_ID`, all created by `setup()`. Nothing secret is in this repo, which is why it can be public.
 
-1. Create a **private** repo at github.com/new called `family-trainer`. Leave it empty.
-2. Push this folder:
-   ```bash
-   git remote add origin https://github.com/YOUR-USER/family-trainer.git
-   git push -u origin main
-   ```
-
-## 2. Supabase project
-
-1. Sign up at supabase.com and create a project named `family-trainer`. Pick the US West region. Save the database password in your password manager.
-2. **Project Settings → API**: copy the **Project URL** and the **anon / publishable key**.
-3. Link and push the database schema:
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref YOUR-PROJECT-REF
-   npx supabase db push
-   ```
-
-### Auth settings (dashboard)
-
-**Authentication → Sign In / Providers → Email**
-- Email provider: on
-- Confirm email: **off** (the 6-digit code already proves the email)
-- Email OTP length: **6**, expiry **900** seconds
-
-**Authentication → Email Templates**: In both **Magic Link** and **Confirm signup**, set:
-- Subject: `Your Family Trainer code: {{ .Token }}`
-- Body: paste the contents of `supabase/templates/code.html`
-
-The template must show `{{ .Token }}`, not a link. On iPhone, a link opens Safari instead of the home-screen app.
-
-**Authentication → URL Configuration**: Set Site URL to your Vercel address (step 4).
-
-### Email sending (needed for Amanda)
-
-Supabase's built-in sender only delivers to members of your Supabase team, and only a few emails an hour. To send Amanda her codes, use Gmail's SMTP server for free:
-
-1. Your Google account needs 2-Step Verification on. Create an **App password** at myaccount.google.com/apppasswords.
-2. **Authentication → Emails → SMTP Settings** → Enable custom SMTP:
-   - Host `smtp.gmail.com`, port `465`
-   - Username: your Gmail address. Password: the app password.
-   - Sender email: your Gmail address. Sender name: `Family Trainer`.
-
-## 3. Push notification keys and edge functions
+## Updating
 
 ```bash
-npx web-push generate-vapid-keys
+npm run backend:deploy   # build, upload, publish a new version (same URL)
+npm run deploy:web       # test, build, publish the app to the gh-pages branch
 ```
 
-This prints a public key and a private key. Keep the private key secret: put it only in Supabase secrets, never in the app or in git.
+`backend/deployment.json` holds the web-app deployment id, so the `/exec` URL never changes; deploy-web.sh builds the app with it.
 
-```bash
-npx supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:you@gmail.com
-npx supabase functions deploy --use-api
-```
+## One-time setup (already done)
 
-## 4. Vercel
-
-1. Sign up at vercel.com with GitHub. Click **Add New → Project** and import `family-trainer`. Vercel detects Vite automatically.
-2. Environment variables:
-   - `VITE_SUPABASE_URL`: the Project URL from step 2
-   - `VITE_SUPABASE_ANON_KEY`: the anon / publishable key
-   - `VITE_VAPID_PUBLIC_KEY`: the **public** key from step 3
-3. Deploy. Copy the `https://….vercel.app` address and:
-   - Put it in Supabase → Authentication → URL Configuration → Site URL
-   - Replace `[APP URL]` in `docs/INSTALL.md`
-
-Each push to `main` redeploys automatically.
-
-## 5. First sign-in
-
-**Jeremy must be the first person to sign in.** The first account ever created becomes the household admin; everyone after that needs an invite. Then follow `docs/INSTALL.md`.
+1. `npx clasp login` in Terminal, approving all permissions. Turn on the Apps Script API at https://script.google.com/home/usersettings.
+2. `npx clasp create --type standalone --title "Family Trainer" --rootDir backend/dist`, then `npm run backend:push`.
+3. In the Apps Script editor, run **setup** once and approve the permissions. Because this is your own script, Google shows "unverified app": click **Advanced → Go to Family Trainer**.
+4. `npm run backend:deploy`, then `npm run deploy:web`.
+5. Repo Settings → Pages → Source: **Deploy from a branch → gh-pages / (root)**.
 
 ## Local development
 
 ```bash
-cp .env.example .env.local   # fill in the same three values
-npm run dev                  # http://localhost:5173 (also on your Wi-Fi IP)
-npm test                     # database RLS tests (runs in PGlite, no Docker)
+echo "VITE_API_URL=https://script.google.com/macros/s/…/exec" > .env.local
+npm run dev     # BASE_PATH=/ npm run dev to serve at the root
+npm test        # API privacy rules, push crypto, and the bundle in an Apps Script-like sandbox
 ```
 
-Push notifications and the camera need HTTPS on a real iPhone, so test those on the Vercel deploy.
+**Jeremy must be the first to sign in.** Only `ADMIN_EMAIL`, invited emails, and existing members can receive a code.

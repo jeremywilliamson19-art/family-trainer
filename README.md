@@ -1,6 +1,6 @@
 # Family Trainer
 
-Private fitness and nutrition PWA for one household. React + TypeScript + Vite, with Supabase (auth, Postgres with RLS, edge functions) and Vercel.
+Private fitness and nutrition PWA for one household. React + TypeScript + Vite, with a Google Apps Script backend with Google Sheets storage, hosted on GitHub Pages.
 
 - `docs/SPEC.md`: what we're building, and in what phases
 - `docs/SETUP.md`: one-time accounts and deploy
@@ -8,8 +8,8 @@ Private fitness and nutrition PWA for one household. React + TypeScript + Vite, 
 
 ```bash
 npm run dev     # local app
-npm test        # RLS tests against the real migrations (PGlite)
+npm test        # backend privacy and push tests
 npm run build   # typecheck + production build
 ```
 
-Layout: `src/` (app, `sw.ts` service worker), `supabase/migrations` (schema and RLS), `supabase/functions` (edge functions), `supabase/tests`.
+Layout: `src/` (app, `sw.ts` service worker), `backend/src` (Apps Script API, privacy rules, Web Push), `backend/tests`.

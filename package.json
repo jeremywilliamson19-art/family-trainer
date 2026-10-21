@@ -7,12 +7,15 @@
     "dev": "vite --host",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -b && tsc -p backend",
     "test": "vitest run",
-    "icons": "pwa-assets-generator"
+    "icons": "pwa-assets-generator",
+    "backend:build": "node backend/build.mjs",
+    "backend:push": "node backend/build.mjs && clasp push --force",
+    "backend:deploy": "node backend/build.mjs && clasp push --force && node backend/deploy.mjs",
+    "deploy:web": "./deploy-web.sh"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.118.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
@@ -21,15 +24,20 @@
     "workbox-routing": "^7.4.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.10",
+    "@google/clasp": "^3.4.1",
+    "@noble/ciphers": "^2.4.0",
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@types/google-apps-script": "^2.0.13",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vite-pwa/assets-generator": "^2.0.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "esbuild": "^0.28.2",
+    "http_ece": "^1.2.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vite-plugin-pwa": "^2.0.0",
-    "vitest": "^5.0.5",
-    "web-push": "^3.6.7"
+    "vitest": "^5.0.5"
   }
 }

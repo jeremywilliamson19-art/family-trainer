@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ScheduleEditor } from '../components/ScheduleEditor'
 import { SportPicker } from '../components/SportPicker'
 import { Toggle } from '../components/Toggle'
-import { callFunction } from '../lib/supabase'
+import { api } from '../lib/api'
 import type { Day, DayType } from '../lib/types'
 
 export function AddChild() {
@@ -24,7 +24,7 @@ export function AddChild() {
     setBusy(true)
     setError(null)
     try {
-      const { id } = await callFunction<{ id: string }>('create-child', {
+      const { id } = await api<{ id: string }>('addChild', {
         display_name: name,
         age_years: Number(age),
         height_in: Number(feet) * 12 + Number(inches || 0),
