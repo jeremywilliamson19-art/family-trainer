@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Toggle } from '../../components/Toggle'
 import { api } from '../../lib/api'
-import { ACTIVITY, computeTargets, isCompleteProfile, type ActivityLevel, type Profile } from '../../lib/macros'
+import { ACTIVITY, computeTargets, isCompleteProfile, type ActivityLevel, type CustomTargets, type Profile } from '../../lib/macros'
 import { refresh } from '../../lib/nutritionStore'
 import type { MemberPrivate, MemberSettings } from '../../lib/types'
 import { invalidateSettings } from '../../lib/useSettings'
@@ -19,6 +19,8 @@ export function TargetsSetup() {
   const [activity, setActivity] = useState<ActivityLevel | ''>('')
   const [adjust, setAdjust] = useState(true)
   const [settings, setSettings] = useState<MemberSettings | null>(null)
+  const [mode, setMode] = useState<'calc' | 'own'>('calc')
+  const [own, setOwn] = useState({ calories: '', protein_g: '', carbs_g: '', fat_g: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -38,6 +40,11 @@ export function TargetsSetup() {
     api<MemberSettings>('getSettings').then((s) => {
       setSettings(s)
       setAdjust(s.training_adjust)
+      if (s.custom_targets) {
+        setMode('own')
+        const c = s.custom_targets
+        setOwn({ calories: String(c.calories), protein_g: String(c.protein_g), carbs_g: String(c.carbs_g), fat_g: String(c.fat_g) })
+      }
     }, () => {})
   }, [])
 
@@ -54,14 +61,28 @@ export function TargetsSetup() {
     [sex, age, feet, inches, weight, goal, activity, adjust, settings],
   )
 
+  const ownComplete = Object.values(own).every((v) => v !== '' && Number(v) >= 0)
+
+  /** Starting point for "enter my own": the calculated numbers, if any. */
+  const switchToOwn = () => {
+    if (preview && !own.calories) {
+      setOwn({ calories: String(preview.calories), protein_g: String(preview.protein_g), carbs_g: String(preview.carbs_g), fat_g: String(preview.fat_g) })
+    }
+    setMode('own')
+  }
+
   const save = async (e: FormEvent) => {
     e.preventDefault()
-    if (!isCompleteProfile(profile)) return
+    if (mode === 'calc' ? !isCompleteProfile(profile) : !ownComplete) return
     setBusy(true)
     setError(null)
     try {
-      await api('saveSettings', { patch: { training_adjust: adjust } })
-      await api('savePrivate', { patch: profile })
+      const custom: CustomTargets | null =
+        mode === 'own'
+          ? { calories: Number(own.calories), protein_g: Number(own.protein_g), carbs_g: Number(own.carbs_g), fat_g: Number(own.fat_g) }
+          : null
+      await api('saveSettings', { patch: { training_adjust: adjust, custom_targets: custom } })
+      if (mode === 'calc') await api('savePrivate', { patch: profile })
       invalidateSettings()
       await refresh()
       nav('/', { replace: true })
@@ -74,6 +95,44 @@ export function TargetsSetup() {
   return (
     <form className="screen" onSubmit={save}>
       <h1>Your targets</h1>
+
+      <div className="segmented">
+        <button type="button" className={mode === 'calc' ? 'on' : ''} onClick={() => setMode('calc')}>
+          Calculate for me
+        </button>
+        <button type="button" className={mode === 'own' ? 'on' : ''} onClick={switchToOwn}>
+          Enter my own
+        </button>
+      </div>
+
+      {mode === 'own' && (
+        <section className="card stack">
+          <p className="muted small">Use numbers from a coach or dietitian. The app tracks against these instead of its formula.</p>
+          <div className="macro-inputs">
+            {(
+              [
+                ['protein_g', 'Protein g'],
+                ['calories', 'Calories'],
+                ['carbs_g', 'Carbs g'],
+                ['fat_g', 'Fat g'],
+              ] as const
+            ).map(([k, label]) => (
+              <label key={k} className="field">
+                <span>{label}</span>
+                <input required type="number" inputMode="numeric" value={own[k]} onChange={(e) => setOwn({ ...own, [k]: e.target.value })} />
+              </label>
+            ))}
+          </div>
+          {ownComplete && (
+            <p className="muted small">
+              Those macros add up to {Math.round(Number(own.protein_g) * 4 + Number(own.carbs_g) * 4 + Number(own.fat_g) * 9).toLocaleString()} calories.
+            </p>
+          )}
+        </section>
+      )}
+
+      {mode === 'calc' && (
+        <>
 
       <section className="card stack">
         <div className="field">
@@ -121,6 +180,9 @@ export function TargetsSetup() {
         ))}
       </section>
 
+        </>
+      )}
+
       <section className="card">
         <Toggle
           label="Training-day carbs"
@@ -130,7 +192,7 @@ export function TargetsSetup() {
         />
       </section>
 
-      {preview && (
+      {mode === 'calc' && preview && (
         <section className="card stack">
           <h2>Your daily targets</h2>
           <div className="target-grid">
@@ -169,7 +231,7 @@ export function TargetsSetup() {
       )}
 
       {error && <p className="error">{error}</p>}
-      <button className="btn" disabled={busy || !preview}>
+      <button className="btn" disabled={busy || (mode === 'calc' ? !preview : !ownComplete)}>
         {busy ? 'Saving…' : 'Save targets'}
       </button>
     </form>

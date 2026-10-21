@@ -123,3 +123,20 @@ describe('household foods', () => {
     expect(call<Food[]>('listFoods', {}, dad)[0]).toMatchObject({ kcal: 210, protein: 20 })
   })
 })
+
+describe('own targets', () => {
+  it('override the formula, keep the carb shift, and can be cleared', () => {
+    call('saveSettings', { patch: { custom_targets: { calories: 2200, protein_g: 200, carbs_g: 180, fat_g: 70 }, weekly_schedule: { mon: 'gym' } } }, dad)
+    const t = call('getTargets', {}, dad)
+    expect(t).toMatchObject({ custom: true, calories: 2200, protein_g: 200, carbs_g: 180, fat_g: 70 })
+    expect(t.by_day.mon.carbs_g).toBe(198)
+    expect(() => call('saveSettings', { patch: { custom_targets: { calories: 300, protein_g: 200, carbs_g: 180, fat_g: 70 } } }, dad)).toThrow(/calories/)
+    call('saveSettings', { patch: { custom_targets: null } }, dad)
+    expect(call('getTargets', {}, dad)).toBeNull() // no profile yet → needs setup
+  })
+
+  it('a child can’t set his own', () => {
+    call('saveSettings', { patch: { custom_targets: { calories: 3000, protein_g: 50, carbs_g: 400, fat_g: 100 } } }, kid)
+    expect(call('getTargets', {}, kid)).toEqual({ kind: 'child', protein_g: 74 })
+  })
+})

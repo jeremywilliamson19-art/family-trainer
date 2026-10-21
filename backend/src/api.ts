@@ -146,6 +146,7 @@ function defaultSettings(memberId: string, role: Role): MemberSettings {
     weekly_schedule: {},
     home_equipment: [],
     training_adjust: true,
+    custom_targets: null,
   }
 }
 
@@ -367,6 +368,17 @@ function sanitizeSettings(target: MemberRow, cur: MemberSettings, patch: Record<
   if ('dislikes' in patch) next.dislikes = strList(patch.dislikes)
   if ('home_equipment' in patch) next.home_equipment = strList(patch.home_equipment, 20)
   if ('weekly_schedule' in patch) next.weekly_schedule = schedule(patch.weekly_schedule)
+  if ('custom_targets' in patch) {
+    const c = patch.custom_targets as Record<string, unknown> | null
+    next.custom_targets = c
+      ? {
+          calories: num(c.calories, 800, 6000, 'calories'),
+          protein_g: num(c.protein_g, 20, 400, 'protein'),
+          carbs_g: num(c.carbs_g, 0, 900, 'carbs'),
+          fat_g: num(c.fat_g, 10, 300, 'fat'),
+        }
+      : null
+  }
   // A child's body measurements never post to the feed.
   if (target.role === 'child') next.feed_body = false
   return next

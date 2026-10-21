@@ -1,3 +1,5 @@
+import type { CustomTargets } from './macros'
+
 export type Role = 'admin' | 'adult' | 'child'
 export type DayType = 'gym' | 'home' | 'rest'
 export const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
@@ -29,6 +31,8 @@ export interface MemberSettings {
   home_equipment: string[]
   /** +10% carbs on training days, −10% on rest days. */
   training_adjust: boolean
+  /** Own calorie/macro numbers instead of the formula (null = calculate). */
+  custom_targets: CustomTargets | null
 }
 
 export interface MemberPrivate {

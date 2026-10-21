@@ -3,7 +3,7 @@ import { AdultDashboard, ChildDashboard } from '../components/nutrition/Dashboar
 import { MealList } from '../components/nutrition/MealList'
 import { useSettings } from '../lib/useSettings'
 import { dayTotals, localDate } from '../lib/nutrition'
-import { useNutrition } from '../lib/nutritionStore'
+import { refresh, useNutrition } from '../lib/nutritionStore'
 import { useMember } from '../lib/session'
 import type { Targets } from '../lib/macros'
 import type { ChildTargets } from '../lib/types'
@@ -16,7 +16,7 @@ function greeting() {
 export function Home() {
   const member = useMember()
   const settings = useSettings()
-  const { targets, meals, outbox, syncing } = useNutrition()
+  const { targets, meals, outbox, syncing, error } = useNutrition()
   const isChild = member.role === 'child'
   const today = localDate()
   const todays = meals.filter((m) => m.date === today)
@@ -42,7 +42,19 @@ export function Home() {
       </h1>
 
       {targets === undefined ? (
-        <p className="muted">{syncing ? 'Loading…' : 'Connect to the internet to load your plan.'}</p>
+        <section className="card stack">
+          <p className="muted">{syncing ? 'Loading your plan…' : (error ?? 'Couldn’t reach the server to load your plan.')}</p>
+          {!syncing && (
+            <button className="btn secondary" onClick={() => void refresh()}>
+              Try again
+            </button>
+          )}
+          {!isChild && (
+            <Link to="/targets" className="btn">
+              Set your targets
+            </Link>
+          )}
+        </section>
       ) : isChild ? (
         targets ? (
           <ChildDashboard target={(targets as ChildTargets).protein_g} eaten={eaten.protein} />
@@ -71,6 +83,7 @@ export function Home() {
         <h2>Today</h2>
         <MealList meals={todays} showMacros={!isChild} />
         {outbox.length > 0 && <p className="muted small">{outbox.length} change{outbox.length === 1 ? '' : 's'} waiting to sync</p>}
+        {error && targets !== undefined && <p className="error small">Sync problem: {error}</p>}
       </section>
     </div>
   )

@@ -26,7 +26,17 @@ export interface DayTarget {
   training: boolean
 }
 
+/** Numbers someone enters themselves instead of the formula's. */
+export interface CustomTargets {
+  calories: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+}
+
 export interface Targets {
+  /** True when the member entered their own numbers. */
+  custom?: boolean
   bmr: number
   tdee: number
   calories: number
@@ -120,6 +130,23 @@ function dayTargets(calories: number, carbs: number, schedule: Partial<Record<Da
     out[d] = { calories: Math.round(calories + dc * 4), carbs_g: Math.round(carbs + dc), training: isTraining }
   }
   return out
+}
+
+/** Targets from the member's own numbers; the training-day carb shift still applies. */
+export function customTargets(c: CustomTargets, schedule: Partial<Record<Day, DayType>>, trainingAdjust: boolean): Targets {
+  return {
+    custom: true,
+    bmr: 0,
+    tdee: 0,
+    calories: Math.round(c.calories),
+    protein_g: Math.round(c.protein_g),
+    fat_g: Math.round(c.fat_g),
+    carbs_g: Math.round(c.carbs_g),
+    loss_lb_per_week: 0,
+    too_fast: false,
+    training_adjust: trainingAdjust,
+    by_day: dayTargets(c.calories, c.carbs_g, schedule, trainingAdjust),
+  }
 }
 
 /** The son's only number: grams of protein a day. */

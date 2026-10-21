@@ -152,11 +152,16 @@ export function offFood(p: OffProduct): Food | null {
 
 /** Looks up a barcode. Returns null when not found (offer a custom food). */
 export async function lookupBarcode(code: string): Promise<Food | null> {
-  const res = await fetch(`${OFF}/api/v2/product/${encodeURIComponent(code)}.json?fields=${OFF_FIELDS}`)
-  if (res.status === 404) return null
-  if (!res.ok) throw new Error('Barcode lookup failed. Check your connection.')
-  const j = (await res.json()) as { status?: number; product?: OffProduct }
-  return j.status === 1 && j.product ? offFood({ ...j.product, code }) : null
+  // Codes arrive normalized to 13 digits; some products are filed under the 12-digit UPC.
+  const tries = code.length === 13 && code.startsWith('0') ? [code, code.slice(1)] : [code]
+  for (const c of tries) {
+    const res = await fetch(`${OFF}/api/v2/product/${encodeURIComponent(c)}.json?fields=${OFF_FIELDS}`)
+    if (res.status === 404) continue
+    if (!res.ok) throw new Error('Barcode lookup failed. Check your connection.')
+    const j = (await res.json()) as { status?: number; product?: OffProduct }
+    if (j.status === 1 && j.product) return offFood({ ...j.product, code })
+  }
+  return null
 }
 
 /** Branded food search. Slower than USDA; call debounced. */

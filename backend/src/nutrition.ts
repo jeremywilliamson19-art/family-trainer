@@ -1,6 +1,6 @@
 // Nutrition: targets, meals, household foods and favorites (Phase 2).
 // A child account never receives calorie, carb or fat numbers.
-import { childProteinTarget, computeTargets, isCompleteProfile, type Profile, type Targets } from '../../src/lib/macros'
+import { childProteinTarget, computeTargets, customTargets, isCompleteProfile, type Profile, type Targets } from '../../src/lib/macros'
 import {
   MEAL_TYPES,
   type ChildGuardianSettings,
@@ -40,13 +40,17 @@ export function recomputeTargets(env: Env, memberId: string) {
     })
     return
   }
+  const s = env.store.get<MemberSettings>('member_settings', memberId)
+  const sched = s?.weekly_schedule ?? {}
+  const adjust = s?.training_adjust ?? true
   const profile = { ...priv } as Partial<Profile>
-  if (!isCompleteProfile(profile)) {
+  let t: Targets
+  if (s?.custom_targets) t = customTargets(s.custom_targets, sched, adjust)
+  else if (isCompleteProfile(profile)) t = computeTargets(profile, sched, adjust)
+  else {
     env.store.del('targets', memberId)
     return
   }
-  const s = env.store.get<MemberSettings>('member_settings', memberId)
-  const t = computeTargets(profile, s?.weekly_schedule ?? {}, s?.training_adjust ?? true)
   env.store.put<StoredTargets>('targets', memberId, { ...t, kind: 'adult', computed_at: iso(env) })
 }
 

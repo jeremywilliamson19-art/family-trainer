@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { normalizeBarcode } from '../../lib/barcode'
 import { lookupBarcode, searchBranded, searchUsda } from '../../lib/foods'
 import { mealName, recentFoods, sumTotals } from '../../lib/nutrition'
 import { mutate, newId, useNutrition } from '../../lib/nutritionStore'
@@ -78,7 +79,7 @@ export function FoodPicker({ showMacros, onPick, onClose }: { showMacros: boolea
   const onCode = useCallback(
     async (code: string) => {
       setScanNote('Looking up…')
-      const known = foods.find((f) => f.barcode === code)
+      const known = foods.find((f) => f.barcode && normalizeBarcode(f.barcode) === code)
       if (known) return pick(known)
       try {
         const found = await lookupBarcode(code)

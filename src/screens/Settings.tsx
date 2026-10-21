@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { Targets } from '../lib/macros'
+import { useNutrition } from '../lib/nutritionStore'
 import { ChipList } from '../components/ChipList'
 import { DeviceAlerts } from '../components/DeviceAlerts'
 import { Equipment } from '../components/Equipment'
@@ -41,6 +43,8 @@ export function Settings() {
         </label>
       </section>
 
+      {s && !isChild && s.track_food && <MyTargets />}
+
       <section className="card" id="devices">
         <h2>Devices &amp; alerts</h2>
         <DeviceAlerts />
@@ -56,16 +60,6 @@ export function Settings() {
               <p className="muted">Recipe book only. You can turn tracking on any time.</p>
             )}
           </section>
-
-          {s.track_food && (
-            <section className="card stack">
-              <h2>Nutrition targets</h2>
-              <p className="muted small">Age, height, weight, goal and activity level.</p>
-              <Link to="/targets" className="btn secondary">
-                Edit my targets
-              </Link>
-            </section>
-          )}
 
           {s.track_workouts && (
             <>
@@ -124,5 +118,41 @@ export function Settings() {
         </button>
       </section>
     </div>
+  )
+}
+
+/** Current daily targets, with the way in to change them. */
+function MyTargets() {
+  const { targets } = useNutrition()
+  const t = targets as Targets | null | undefined
+  return (
+    <section className="card stack">
+      <h2>My targets</h2>
+      {t ? (
+        <div className="target-grid">
+          <div className="hero">
+            <strong>{t.protein_g} g</strong>
+            <span>protein</span>
+          </div>
+          <div>
+            <strong>{t.calories.toLocaleString()}</strong>
+            <span>calories</span>
+          </div>
+          <div>
+            <strong>{t.carbs_g} g</strong>
+            <span>carbs</span>
+          </div>
+          <div>
+            <strong>{t.fat_g} g</strong>
+            <span>fat</span>
+          </div>
+        </div>
+      ) : (
+        <p className="muted small">Not set yet.</p>
+      )}
+      <Link to="/targets" className="btn secondary">
+        {t ? 'Change my targets' : 'Set my targets'}
+      </Link>
+    </section>
   )
 }

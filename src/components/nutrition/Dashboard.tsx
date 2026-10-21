@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { Targets } from '../../lib/macros'
 import type { Totals } from '../../lib/nutrition'
 import type { Day } from '../../lib/types'
@@ -57,6 +58,14 @@ export function AdultDashboard({ targets, eaten }: { targets: Targets; eaten: To
           </small>
         </label>
       </div>
+
+      <Link to="/targets" className="row targets-line">
+        <span className="muted small">
+          Daily targets{targets.custom ? ' (your own)' : ''}: <strong>{targets.protein_g} g protein</strong> · {day.calories.toLocaleString()} cal · {day.carbs_g} g carbs ·{' '}
+          {targets.fat_g} g fat
+        </span>
+        <span className="link-text">Edit</span>
+      </Link>
     </section>
   )
 }
