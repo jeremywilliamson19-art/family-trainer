@@ -44,7 +44,7 @@ export function AddChild() {
     <form className="screen" onSubmit={submit}>
       <h1>Add child</h1>
       <p className="muted">
-        His phone signs in with a pairing code, so he doesn’t need an email. His weight is only ever shown to you.
+        His phone signs in with a pairing code, so he doesn’t need an email.
       </p>
 
       <section className="card stack">
@@ -68,7 +68,7 @@ export function AddChild() {
           </div>
         </div>
         <label className="field">
-          <span>Weight (lb) — parent only</span>
+          <span>Weight (lb)</span>
           <input required type="number" inputMode="decimal" min={30} max={350} value={weight} onChange={(e) => setWeight(e.target.value)} />
         </label>
       </section>

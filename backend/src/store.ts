@@ -18,6 +18,7 @@ export type TableName =
   | 'programs'
   | 'workouts'
   | 'tests'
+  | 'measurements'
 
 export const TABLES: TableName[] = [
   'members',
@@ -36,6 +37,7 @@ export const TABLES: TableName[] = [
   'programs',
   'workouts',
   'tests',
+  'measurements',
 ]
 
 export interface Store {

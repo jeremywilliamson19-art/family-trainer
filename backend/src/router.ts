@@ -12,6 +12,7 @@ const RECOMPUTE: Record<string, (p: Params, myId: string, result: unknown) => st
   saveSettings: (p, myId) => String(p.member_id ?? myId),
   saveGuardian: (p) => String(p.child_id),
   addChild: (_p, _myId, r) => (r as { id: string }).id,
+  saveMeasurement: (p, myId) => String((p.measurement as { member_id?: string } | undefined)?.member_id ?? myId),
 }
 
 export function handle(env: Env, body: Params): { ok: true; data: unknown } | { ok: false; error: string; code: string } {

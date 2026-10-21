@@ -2,7 +2,7 @@
 // guardrails that matter for safety are enforced here too, not only in the
 // app: only a parent edits the son's program, his prescribed effort is
 // capped at RPE 8, and only a parent can mark his form "good".
-import type { ChildGuardianSettings, LoggedExercise, Program, ProgramDay, TestRecord, Workout } from '../../src/lib/types'
+import type { ChildGuardianSettings, LoggedExercise, Measurement, MemberPrivate, Program, ProgramDay, TestRecord, Workout } from '../../src/lib/types'
 import { ApiError, canManage, iso, num, text, type Env, type MemberRow, type Params } from './api'
 
 const ID_RE = /^[\w:.-]{1,80}$/
@@ -217,6 +217,58 @@ function deleteTest(env: Env, me: MemberRow, p: Params) {
   return { ok: true }
 }
 
+// ---------------------------------------------------------------------------
+// Body measurements. A parent logs the son's (he can see them, not edit them).
+// ---------------------------------------------------------------------------
+
+function saveMeasurement(env: Env, me: MemberRow, p: Params) {
+  const raw = (p.measurement ?? {}) as Record<string, unknown>
+  const mid = id(raw.id, 'entry')
+  const target = canManage(env, me, String(raw.member_id ?? me.id))
+  if (me.role === 'child') throw new ApiError('forbidden', 'A parent logs your measurements')
+  const existing = env.store.get<Measurement>('measurements', mid)
+  if (existing && existing.member_id !== target.id) throw new ApiError('forbidden', 'Not allowed')
+  const date = String(raw.date ?? '')
+  if (!DATE_RE.test(date)) throw new ApiError('invalid', 'Bad date')
+  const opt = (v: unknown, lo: number, hi: number, label: string) => (v === null || v === undefined || v === '' ? null : num(v, lo, hi, label))
+  const m: Measurement = {
+    id: mid,
+    member_id: target.id,
+    date,
+    weight_lb: opt(raw.weight_lb, 30, 700, 'weight'),
+    waist_in: opt(raw.waist_in, 15, 80, 'waist'),
+    chest_in: opt(raw.chest_in, 15, 80, 'chest'),
+    height_in: opt(raw.height_in, 30, 96, 'height'),
+  }
+  if (m.weight_lb === null && m.waist_in === null && m.chest_in === null && m.height_in === null) throw new ApiError('invalid', 'Enter at least one number')
+  env.store.put('measurements', mid, m)
+
+  // The newest weigh-in (and height) becomes the current profile value, which
+  // the calorie/protein targets are calculated from.
+  const mine = env.store.all<Measurement>('measurements').filter((x) => x.member_id === target.id)
+  const latest = (k: 'weight_lb' | 'height_in') => mine.filter((x) => typeof x[k] === 'number').sort((a, b) => a.date.localeCompare(b.date)).at(-1)?.[k] ?? null
+  const priv = env.store.get<MemberPrivate>('member_private', target.id)
+  if (priv) {
+    const w = latest('weight_lb')
+    const h = latest('height_in')
+    env.store.put<MemberPrivate>('member_private', target.id, { ...priv, ...(w !== null ? { weight_lb: w } : {}), ...(h !== null ? { height_in: h } : {}) })
+  }
+  return { ok: true }
+}
+
+function deleteMeasurement(env: Env, me: MemberRow, p: Params) {
+  const m = env.store.get<Measurement>('measurements', String(p.id ?? ''))
+  if (!m) return { ok: true }
+  canManage(env, me, m.member_id)
+  if (me.role === 'child') throw new ApiError('forbidden', 'A parent logs your measurements')
+  env.store.del('measurements', m.id)
+  return { ok: true }
+}
+
+function measurementsFor(env: Env, memberId: string): Measurement[] {
+  return env.store.all<Measurement>('measurements').filter((m) => m.member_id === memberId)
+}
+
 /** The son's limits, set by the parent (in-season, foot-contact cap). */
 function youthLimits(env: Env, member: MemberRow) {
   if (member.role !== 'child') return null
@@ -231,6 +283,7 @@ function trainingSync(env: Env, me: MemberRow, p: Params) {
     programs: env.store.all<Program>('programs').filter((x) => x.member_id === target.id),
     workouts: listWorkouts(env, me, { member_id: target.id, from: p.from }),
     tests: env.store.all<TestRecord>('tests').filter((t) => t.member_id === target.id),
+    measurements: measurementsFor(env, target.id),
     limits: youthLimits(env, target),
   }
 }
@@ -243,6 +296,8 @@ export const TRAINING_AUTHED: Record<string, (env: Env, me: MemberRow, p: Params
   setFormGood,
   saveTest,
   deleteTest,
+  saveMeasurement,
+  deleteMeasurement,
   listWorkouts,
   trainingSync,
 }

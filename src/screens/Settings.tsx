@@ -35,6 +35,16 @@ export function Settings() {
       <h1>Settings</h1>
       {error && <p className="error">{error}</p>}
 
+      {member.role === 'admin' && (
+        <Link to="/admin" className="card row link-row">
+          <span>
+            <strong>👨‍👩‍👦 Family</strong>
+            <small className="muted block">Invite Amanda, your son’s account, pairing codes, his program and limits</small>
+          </span>
+          <span className="muted">›</span>
+        </Link>
+      )}
+
       <section className="card">
         <h2>Profile</h2>
         <label className="field">

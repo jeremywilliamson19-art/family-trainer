@@ -156,3 +156,34 @@ describe('speed & jump tests', () => {
     expect(() => call('saveTest', { record: rec('t4', dadId, { test: 'moonwalk' }) }, dad)).toThrow(/Unknown test/)
   })
 })
+
+describe('measurements', () => {
+  const m = (mid: string, member_id: string, extra: Record<string, unknown>) => ({ id: mid, member_id, date: '2026-10-21', ...extra })
+
+  it('a weigh-in updates the profile weight and the targets', () => {
+    call('savePrivate', { patch: { sex: 'male', age_years: 40, height_in: 70, weight_lb: 210, goal_weight_lb: 185, activity_level: 'moderate' } }, dad)
+    const before = call('getTargets', {}, dad).calories
+    call('saveMeasurement', { measurement: m('a', dadId, { weight_lb: 200, waist_in: 39 }) }, dad)
+    expect(call('getPrivate', {}, dad).weight_lb).toBe(200)
+    expect(call('getTargets', {}, dad).calories).toBeLessThan(before)
+    // An older entry doesn't override the newest.
+    call('saveMeasurement', { measurement: { ...m('b', dadId, { weight_lb: 220 }), date: '2026-09-01' } }, dad)
+    expect(call('getPrivate', {}, dad).weight_lb).toBe(200)
+  })
+
+  it('the son sees his own growth entries but only a parent logs them', () => {
+    call('saveMeasurement', { measurement: m('k1', kidId, { weight_lb: 108, height_in: 60.5 }) }, dad)
+    call('saveMeasurement', { measurement: { ...m('k2', kidId, { weight_lb: 110 }), date: '2026-10-28' } }, dad)
+    expect(call('trainingSync', {}, kid).measurements.map((x: { weight_lb: number }) => x.weight_lb).sort()).toEqual([108, 110])
+    expect(() => call('saveMeasurement', { measurement: m('k3', kidId, { height_in: 62 }) }, kid)).toThrow(/parent/)
+    expect(() => call('deleteMeasurement', { id: 'k1' }, kid)).toThrow(/parent/)
+    // The parent sees all of it, and the son's protein target follows his weight.
+    expect(call('trainingSync', { member_id: kidId }, dad).measurements).toHaveLength(2)
+    expect(call('getTargets', {}, kid)).toEqual({ kind: 'child', protein_g: 77 }) // 110 × 0.7
+  })
+
+  it('mom can’t see dad’s weigh-ins', () => {
+    call('saveMeasurement', { measurement: m('a', dadId, { weight_lb: 200 }) }, dad)
+    expect(() => call('trainingSync', { member_id: dadId }, mom)).toThrow(/forbidden/)
+  })
+})

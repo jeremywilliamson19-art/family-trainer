@@ -150,6 +150,14 @@ export function TrainHome() {
         </button>
       </section>
 
+      <Link to="/progress" className="card row link-row tests-link">
+        <span>
+          <strong>📈 Progress</strong>
+          <small className="muted block">Workouts logged, lifts and body vs your baseline</small>
+        </span>
+        <span className="muted">›</span>
+      </Link>
+
       <Link to="/tests" className="card row link-row tests-link">
         <span>
           <strong>⚡ Speed &amp; jump tests</strong>

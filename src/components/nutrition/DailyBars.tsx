@@ -57,7 +57,8 @@ export function DailyBars({ data, target, unit, label }: { data: DayValue[]; tar
           </>
         )}
         {data.map((d, i) =>
-          i % every === 0 || i === data.length - 1 ? (
+          // Every few labels on long charts, so they never run together.
+          i % every === 0 ? (
             <text key={d.date} x={i * slot + slot / 2} y={H - 4} textAnchor="middle" className="tick">
               {dayLabel(d.date)}
             </text>

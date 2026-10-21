@@ -206,3 +206,15 @@ export interface TestRecord {
   drills: string[]
   notes?: string
 }
+
+/** A weigh-in and/or body measurements. A child never receives weight, waist or chest. */
+export interface Measurement {
+  id: string
+  member_id: string
+  date: string
+  weight_lb?: number | null
+  waist_in?: number | null
+  chest_in?: number | null
+  /** The son's height, entered monthly by a parent. */
+  height_in?: number | null
+}

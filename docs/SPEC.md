@@ -26,7 +26,7 @@ Users:
 - One household with three members. Dad is the household admin.
 - The son's account is a child account managed by Dad:
   - Dad can see everything in the son's account. The son can't see Dad's or Mom's private data unless they share it.
-  - The son's body weight is never shown to him. Only the parent view can see it.
+  - ~~The son's body weight is never shown to him.~~ **Changed 2026-10-21 (Jeremy):** the son may see his own weight (he's working to add muscle), but it is never a main measure: his Progress leads with workouts, strength and speed, and a Growth section (height, then weight) comes last with no goal. Only a parent logs it. Calories stay hidden from him.
   - There is no messaging. Members can react to each other's posts with kudos only.
 - **Family feed:** a simple feed of wins visible to all three, such as a completed workout, a PR, a new jump or sprint best, or a goal-hit streak. Each user controls which categories post to the feed. Weight and body measurements are off by default and never posted from the child account.
 - No accounts outside the household in v1.

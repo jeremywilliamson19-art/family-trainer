@@ -244,8 +244,8 @@ export function ChildDetail() {
 
       {body.row && (
         <section className="card stack">
-          <h2>Body (parent only)</h2>
-          <p className="muted small">He never sees these numbers.</p>
+          <h2>Body</h2>
+          <p className="muted small">He can see his height and weight on his Progress screen, as background to his strength and speed. Log new entries in Progress.</p>
           <NumberField label="Age" value={body.row.age_years} onSave={(n) => body.save({ age_years: n })} />
           <NumberField label="Height (in)" value={body.row.height_in} step={0.25} onSave={(n) => body.save({ height_in: n })} />
           <NumberField label="Weight (lb)" value={body.row.weight_lb} step={0.1} onSave={(n) => body.save({ weight_lb: n })} />

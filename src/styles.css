@@ -1195,3 +1195,111 @@ input[type='range'] {
   font-size: 15px;
   margin: 0;
 }
+
+/* Progress */
+.stat-grid.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+.progress-row {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.progress-row .row {
+  min-height: 0;
+}
+.lift-head {
+  width: 100%;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+}
+.goal-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.trend-chart {
+  margin: 6px 0 0;
+}
+.trend-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: pan-y;
+}
+.trend-chart .grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.trend-chart .tick {
+  fill: var(--muted);
+  font-size: 10px;
+}
+.trend-chart .series {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.trend-chart .pt {
+  fill: var(--accent);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+.trend-chart .pt.raw {
+  fill: var(--muted);
+}
+.trend-chart .pt.sel {
+  fill: var(--text);
+}
+.trend-chart .goal-line {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.trend-chart .legend {
+  display: flex;
+  gap: 14px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.trend-chart .legend i {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.trend-chart .legend .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.trend-chart .legend .ln {
+  width: 14px;
+  height: 2px;
+  background: var(--accent);
+}
+.trend-chart .legend .goal {
+  width: 14px;
+  border-top: 2px dashed var(--muted);
+}
+.measure-form {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+details summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  padding: 6px 0;
+}
+
+.card a:not(.btn):not(.link-row) {
+  color: var(--accent);
+}
