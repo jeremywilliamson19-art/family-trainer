@@ -62,10 +62,10 @@ export function newWorkout(opts: {
   }
 }
 
-/** Prescription shown under an exercise name: "3 × 8–12 · rest 90 s". */
-export function prescription(sets: number, repMin: number, repMax: number, exerciseId: string, rest?: number): string {
+/** Prescription shown under an exercise name: "3 × 8–12". */
+export function prescription(sets: number, repMin: number, repMax: number, exerciseId: string): string {
   const unit = exercise(exerciseId).unit
   const range = repMin === repMax ? `${repMin}` : `${repMin}–${repMax}`
   const what = unit === 'sec' ? `${range} sec` : unit === 'yd' ? `${range} yd` : unit === 'min' ? `${range} min` : range
-  return `${sets} × ${what}${rest ? ` · rest ${rest >= 60 ? `${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')}` : `${rest} s`}` : ''}`
+  return `${sets} × ${what}`
 }

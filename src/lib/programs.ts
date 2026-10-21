@@ -134,8 +134,8 @@ export const DUMBBELL_HOME: Template = {
 
 /**
  * 3-day youth athletic development: landing drills first, then jumps,
- * sprint mechanics and technique-first strength. Effort capped at RPE 8,
- * foot contacts ≤ 80 per session.
+ * sprint mechanics and technique-first strength. Foot contacts ≤ 80 per
+ * session.
  */
 export const YOUTH: Template = {
   id: 'youth_athlete',
@@ -147,42 +147,42 @@ export const YOUTH: Template = {
     {
       name: 'Day 1: jump + push/pull',
       exercises: [
-        x('snap_down', 2, 5, 5, 60, { rpe: 6 }), // 10 contacts
-        x('pogo_hops', 2, 10, 10, 60, { rpe: 6 }), // 20
-        x('box_jump', 3, 4, 4, 90, { rpe: 7 }), // 12
-        x('a_skip', 2, 20, 20, 60, { rpe: 6 }),
-        x('goblet_squat', 3, 8, 12, 90, { rpe: 7 }),
-        x('push_up', 3, 8, 15, 75, { rpe: 7 }),
-        x('inverted_row', 3, 8, 12, 75, { rpe: 7 }),
-        x('plank', 3, 20, 40, 45, { rpe: 6 }),
+        x('snap_down', 2, 5, 5, 60), // 10 contacts
+        x('pogo_hops', 2, 10, 10, 60), // 20
+        x('box_jump', 3, 4, 4, 90), // 12
+        x('a_skip', 2, 20, 20, 60),
+        x('goblet_squat', 3, 8, 12, 90),
+        x('push_up', 3, 8, 15, 75),
+        x('inverted_row', 3, 8, 12, 75),
+        x('plank', 3, 20, 40, 45),
       ],
     },
     {
       name: 'Day 2: speed + legs',
       exercises: [
-        x('drop_stick', 2, 5, 5, 60, { rpe: 6 }), // 10
-        x('broad_jump', 3, 4, 4, 90, { rpe: 7 }), // 12
-        x('lateral_bound', 2, 6, 6, 75, { rpe: 7 }), // 12
-        x('wall_drill', 3, 6, 6, 60, { rpe: 6 }),
-        x('acceleration_start', 4, 10, 10, 90, { rpe: 8 }),
-        x('split_squat', 3, 8, 10, 75, { rpe: 7 }),
-        x('db_rdl', 3, 8, 12, 75, { rpe: 7 }),
-        x('med_ball_chest_pass', 3, 6, 6, 60, { rpe: 7 }),
-        x('side_plank', 2, 20, 30, 45, { rpe: 6 }),
+        x('drop_stick', 2, 5, 5, 60), // 10
+        x('broad_jump', 3, 4, 4, 90), // 12
+        x('lateral_bound', 2, 6, 6, 75), // 12
+        x('wall_drill', 3, 6, 6, 60),
+        x('acceleration_start', 4, 10, 10, 90),
+        x('split_squat', 3, 8, 10, 75),
+        x('db_rdl', 3, 8, 12, 75),
+        x('med_ball_chest_pass', 3, 6, 6, 60),
+        x('side_plank', 2, 20, 30, 45),
       ],
     },
     {
       name: 'Day 3: power + full body',
       exercises: [
-        x('snap_down', 2, 5, 5, 60, { rpe: 6 }), // 10
-        x('pogo_hops', 2, 10, 10, 60, { rpe: 6 }), // 20
-        x('single_leg_hop', 2, 4, 4, 90, { rpe: 7 }), // 8
-        x('sprint_20', 6, 20, 20, 90, { rpe: 8 }),
-        x('step_up', 3, 8, 10, 75, { rpe: 7 }),
-        x('push_up', 3, 8, 15, 75, { rpe: 7 }),
-        x('one_arm_db_row', 3, 8, 12, 75, { rpe: 7 }),
-        x('med_ball_slam', 3, 8, 8, 60, { rpe: 7 }),
-        x('dead_bug', 2, 8, 12, 45, { rpe: 6 }),
+        x('snap_down', 2, 5, 5, 60), // 10
+        x('pogo_hops', 2, 10, 10, 60), // 20
+        x('single_leg_hop', 2, 4, 4, 90), // 8
+        x('sprint_20', 6, 20, 20, 90),
+        x('step_up', 3, 8, 10, 75),
+        x('push_up', 3, 8, 15, 75),
+        x('one_arm_db_row', 3, 8, 12, 75),
+        x('med_ball_slam', 3, 8, 8, 60),
+        x('dead_bug', 2, 8, 12, 45),
       ],
     },
   ],

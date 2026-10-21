@@ -5,7 +5,6 @@ import { exercise, type Exercise, type Muscle } from './exercises'
 import { addDays } from './nutrition'
 import type { LoggedExercise, LoggedSet, Program, ProgramDay, ProgramExercise, Workout } from './types'
 
-export const YOUTH_MAX_RPE = 8
 export const ARM_MIN_SETS = 12
 
 /** Epley estimated one-rep max. */
@@ -42,12 +41,12 @@ export function sessionsOf(exerciseId: string, workouts: Workout[]): (LoggedExer
 // Weekly volume
 // ---------------------------------------------------------------------------
 
-/** A set that counts toward volume: done, and hard (RPE 7+, or not rated). */
-function isHardSet(s: LoggedSet, ex: Exercise): boolean {
-  return s.done && (s.reps ?? 0) > 0 && (ex.kind === 'strength' || ex.kind === 'core') && (s.rpe === null || s.rpe >= 7)
+/** A set that counts toward volume: a completed strength or core set. */
+function isWorkingSet(s: LoggedSet, ex: Exercise): boolean {
+  return s.done && (s.reps ?? 0) > 0 && (ex.kind === 'strength' || ex.kind === 'core')
 }
 
-/** Hard sets per muscle for the week starting `monday`. Secondary muscles count half. */
+/** Working sets per muscle for the week starting `monday`. Secondary muscles count half. */
 export function weeklyVolume(workouts: Workout[], monday: string): Partial<Record<Muscle, number>> {
   const sunday = addDays(monday, 6)
   const vol: Partial<Record<Muscle, number>> = {}
@@ -55,7 +54,7 @@ export function weeklyVolume(workouts: Workout[], monday: string): Partial<Recor
     if (w.date < monday || w.date > sunday) continue
     for (const e of w.exercises) {
       const ex = exercise(e.exercise_id)
-      const n = e.sets.filter((s) => isHardSet(s, ex)).length
+      const n = e.sets.filter((s) => isWorkingSet(s, ex)).length
       if (!n) continue
       for (const m of ex.primary) vol[m] = (vol[m] ?? 0) + n
       for (const m of ex.secondary ?? []) vol[m] = (vol[m] ?? 0) + n / 2
@@ -68,14 +67,15 @@ export function weeklyVolume(workouts: Workout[], monday: string): Partial<Recor
 export function armWarnings(vol: Partial<Record<Muscle, number>>): string[] {
   return (['triceps', 'biceps'] as const)
     .filter((m) => (vol[m] ?? 0) < ARM_MIN_SETS)
-    .map((m) => `${m === 'triceps' ? 'Triceps' : 'Biceps'}: ${Math.floor(vol[m] ?? 0)} of ${ARM_MIN_SETS} hard sets this week`)
+    .map((m) => `${m === 'triceps' ? 'Triceps' : 'Biceps'}: ${Math.floor(vol[m] ?? 0)} of ${ARM_MIN_SETS} sets this week`)
 }
 
 // ---------------------------------------------------------------------------
-// Progression (double progression; youth: reps first, weight after form check)
+// Progression (double progression from the numbers alone; youth: reps
+// first, weight only after a parent marks form good)
 // ---------------------------------------------------------------------------
 
-export type AdviceKind = 'new' | 'add_weight' | 'add_reps' | 'hold' | 'fatigue' | 'form_check' | 'too_hard'
+export type AdviceKind = 'new' | 'add_weight' | 'add_reps' | 'hold' | 'fatigue' | 'form_check'
 
 export interface Advice {
   kind: AdviceKind
@@ -107,11 +107,9 @@ export function advise(exerciseId: string, workouts: Workout[], youth: boolean):
   const w = topWeight(last)
   const weighted = w > 0 && ex.load !== 'bodyweight'
   const atTop = sets.length > 0 && sets.every((s) => (s.reps ?? 0) >= last.rep_max)
-  const maxRpe = Math.max(0, ...sets.map((s) => s.rpe ?? 0))
   const lastText = `Last time: ${sets.map((s) => s.reps).join(', ')} reps${weighted ? ` at ${w} lb` : ''}.`
 
   if (youth) {
-    if (maxRpe > YOUTH_MAX_RPE) return { kind: 'too_hard', text: `${lastText} That was harder than an 8 out of 10. Same weight, smooth reps.`, weight: weighted ? w : null }
     if (atTop && weighted) {
       return last.form_good
         ? { kind: 'add_weight', text: `${lastText} Form checked ✓. Add ${increment(ex, true)} lb.`, weight: w + increment(ex, true) }
@@ -124,7 +122,7 @@ export function advise(exerciseId: string, workouts: Workout[], youth: boolean):
   if (prev && prev2 && totalReps(last) < totalReps(prev) && totalReps(prev) < totalReps(prev2) && topWeight(last) <= topWeight(prev) && topWeight(prev) <= topWeight(prev2)) {
     return { kind: 'fatigue', text: `${lastText} Reps have dropped two sessions in a row. Possible fatigue: sleep, food, or a lighter week.`, weight: weighted ? w : null }
   }
-  if (atTop && maxRpe <= 9) {
+  if (atTop) {
     if (!weighted) return { kind: 'add_reps', text: `${lastText} Top of the range. Add reps or a harder variation.`, weight: null }
     return { kind: 'add_weight', text: `${lastText} All sets hit ${last.rep_max}. Add ${increment(ex, false)} lb.`, weight: w + increment(ex, false) }
   }
@@ -132,6 +130,24 @@ export function advise(exerciseId: string, workouts: Workout[], youth: boolean):
     return { kind: 'hold', text: `${lastText} Same as the time before. Hold the weight and fight for one more rep.`, weight: weighted ? w : null }
   }
   return { kind: 'add_reps', text: `${lastText} Beat it by a rep.`, weight: weighted ? w : null }
+}
+
+/**
+ * Applies an edit to set `si`, carrying a typed weight or rep count down to
+ * later sets that are still following along (blank, or equal to what this
+ * set was). Later sets changed by hand, and finished sets, keep their values.
+ */
+export function carryForward(sets: LoggedSet[], si: number, patch: Partial<LoggedSet>): LoggedSet[] {
+  const before = sets[si]
+  return sets.map((s, j) => {
+    if (j === si) return { ...s, ...patch }
+    if (j < si || s.done) return s
+    const next = { ...s }
+    for (const k of ['weight', 'reps'] as const) {
+      if (k in patch && (s[k] === null || s[k] === before[k])) next[k] = patch[k] ?? null
+    }
+    return next
+  })
 }
 
 /** Sets to start today's exercise with, from last time (weights filled in). */
@@ -241,13 +257,13 @@ export interface DayPlan {
 }
 
 /**
- * The son's session for today, with the guardrails enforced: RPE ≤ 8,
- * landing drills before big jumps, foot contacts under the parent's cap,
- * and in-season cuts (−40% sets, lifting at most 2 days a week).
+ * The son's session for today, with the guardrails enforced: landing drills
+ * before big jumps, foot contacts under the parent's cap, and in-season cuts
+ * (−40% sets, lifting at most 2 days a week).
  */
 export function youthDayPlan(day: ProgramDay, opts: { inSeason: boolean; liftsThisWeek: number; contactCap: number }): DayPlan {
   const notes: string[] = []
-  let list = day.exercises.map((e) => ({ ...e, rpe: Math.min(e.rpe ?? YOUTH_MAX_RPE, YOUTH_MAX_RPE) }))
+  let list = day.exercises.map((e) => ({ ...e }))
 
   const isLift = (e: ProgramExercise) => exercise(e.exercise_id).kind === 'strength'
   if (opts.inSeason) {

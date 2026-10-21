@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ExercisePicker } from '../../components/training/ExercisePicker'
+import { ExerciseLink } from '../../components/ExerciseLink'
 import { api } from '../../lib/api'
-import { exercise } from '../../lib/exercises'
 import { mutateTraining, useTraining } from '../../lib/trainingStore'
 import type { MemberSettings, Program, ProgramExercise } from '../../lib/types'
 import { useSettings } from '../../lib/useSettings'
@@ -79,7 +79,7 @@ export function ProgramEditor() {
         youthOnly={program.youth}
         onClose={() => setAdding(null)}
         onPick={(ex) => {
-          setDay(adding, [...program.days[adding].exercises, { exercise_id: ex.id, sets: 3, rep_min: 8, rep_max: 12, rest_s: 90, ...(program.youth ? { rpe: 7 } : {}) }])
+          setDay(adding, [...program.days[adding].exercises, { exercise_id: ex.id, sets: 3, rep_min: 8, rep_max: 12, rest_s: 90 }])
           setAdding(null)
         }}
       />
@@ -106,7 +106,7 @@ export function ProgramEditor() {
           ))}
         </div>
       )}
-      {program.youth && <p className="muted small">Youth rules always apply: effort capped at 8, landing drills before jumps, and the foot-contact limit.</p>}
+      {program.youth && <p className="muted small">Youth rules always apply: landing drills before jumps, the foot-contact limit, and weight goes up only after you mark form good.</p>}
 
       {program.days.map((d, di) => (
         <section key={di} className="card stack">
@@ -114,7 +114,7 @@ export function ProgramEditor() {
           {d.exercises.map((e, ei) => (
             <div key={ei} className="prog-ex">
               <div className="row">
-                <strong>{exercise(e.exercise_id).name}</strong>
+                <strong><ExerciseLink id={e.exercise_id} who={childId ?? undefined} /></strong>
                 <span className="row-actions">
                   <button className="btn link small" aria-label="Move up" disabled={ei === 0} onClick={() => move(di, ei, -1)}>↑</button>
                   <button className="btn link small" aria-label="Move down" disabled={ei === d.exercises.length - 1} onClick={() => move(di, ei, 1)}>↓</button>
@@ -125,10 +125,6 @@ export function ProgramEditor() {
                 <label>Sets<input type="number" inputMode="numeric" value={e.sets} onChange={(v) => setEx(di, ei, { sets: num(v.target.value, 1, 10) })} /></label>
                 <label>Reps<input type="number" inputMode="numeric" value={e.rep_min} onChange={(v) => setEx(di, ei, { rep_min: num(v.target.value, 1, 120) })} /></label>
                 <label>to<input type="number" inputMode="numeric" value={e.rep_max} onChange={(v) => setEx(di, ei, { rep_max: num(v.target.value, 1, 120) })} /></label>
-                <label>Rest s<input type="number" inputMode="numeric" value={e.rest_s} onChange={(v) => setEx(di, ei, { rest_s: num(v.target.value, 0, 600) })} /></label>
-                {program.youth && (
-                  <label>Effort<input type="number" inputMode="numeric" min={1} max={8} value={e.rpe ?? 7} onChange={(v) => setEx(di, ei, { rpe: num(v.target.value, 1, 8) })} /></label>
-                )}
               </div>
             </div>
           ))}

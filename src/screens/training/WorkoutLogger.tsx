@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ExercisePicker } from '../../components/training/ExercisePicker'
-import { RestTimer } from '../../components/training/RestTimer'
+import { ExerciseLink } from '../../components/ExerciseLink'
+import { FORM } from '../../lib/formGuide'
 import { exercise } from '../../lib/exercises'
 import { useMember } from '../../lib/session'
-import { advise, findPRs, footContacts, YOUTH_MAX_RPE, type Advice, type PR } from '../../lib/training'
+import { advise, carryForward, findPRs, footContacts, type Advice, type PR } from '../../lib/training'
 import { mutateTraining, setDraft, useDraft, useTraining } from '../../lib/trainingStore'
 import type { LoggedExercise, LoggedSet, Workout } from '../../lib/types'
 import { useSettings } from '../../lib/useSettings'
@@ -19,7 +20,6 @@ const ADVICE_CLASS: Record<Advice['kind'], string> = {
   hold: 'muted',
   fatigue: 'warn-text',
   form_check: 'warn-text',
-  too_hard: 'warn-text',
 }
 
 /** Logging the workout in progress (the draft). */
@@ -27,10 +27,9 @@ export function WorkoutLogger() {
   const member = useMember()
   const youth = member.role === 'child'
   const settings = useSettings()
-  const { workouts, programs, limits } = useTraining()
+  const { workouts, limits } = useTraining()
   const draft = useDraft()
   const nav = useNavigate()
-  const [restEnds, setRestEnds] = useState<number | null>(null)
   const [adding, setAdding] = useState(false)
   const [summary, setSummary] = useState<{ prs: PR[]; sets: number } | null>(null)
 
@@ -74,36 +73,17 @@ export function WorkoutLogger() {
   const w = draft
 
   const update = (exercises: LoggedExercise[]) => setDraft({ ...w, exercises })
-  // A weight typed into one set carries down to later sets that are still blank.
   const updateSet = (ei: number, si: number, patch: Partial<LoggedSet>) =>
-    update(
-      w.exercises.map((e, i) =>
-        i !== ei
-          ? e
-          : {
-              ...e,
-              sets: e.sets.map((s, j) =>
-                j === si ? { ...s, ...patch } : j > si && 'weight' in patch && !s.done && s.weight === null ? { ...s, weight: patch.weight ?? null } : s,
-              ),
-            },
-      ),
-    )
-
-  const restFor = (exerciseId: string) => {
-    const program = programs.find((p) => p.id === w.program_id)
-    const pe = program?.days[w.day_index ?? 0]?.exercises.find((x) => x.exercise_id === exerciseId)
-    return pe?.rest_s ?? 90
-  }
+    update(w.exercises.map((e, i) => (i === ei ? { ...e, sets: carryForward(e.sets, si, patch) } : e)))
 
   const toggleDone = (ei: number, si: number) => {
-    const s = w.exercises[ei].sets[si]
+    const e = w.exercises[ei]
+    const s = e.sets[si]
     const done = !s.done
-    // Checking off with blank reps means "hit the target".
-    updateSet(ei, si, { done, reps: done && s.reps === null ? w.exercises[ei].rep_max : s.reps })
-    if (done) {
-      const rest = restFor(w.exercises[ei].exercise_id)
-      if (rest > 0) setRestEnds(Date.now() + rest * 1000)
-    }
+    // Checking off a blank set means "same as the set before" (or the top of the range).
+    const reps = s.reps ?? (done ? (e.sets[si - 1]?.reps ?? e.rep_max) : null)
+    const weight = s.weight ?? (done ? (e.sets[si - 1]?.weight ?? null) : null)
+    update(w.exercises.map((x, i) => (i === ei ? { ...x, sets: x.sets.map((y, j) => (j === si ? { ...y, done, reps, weight } : y)) } : x)))
   }
 
   const contacts = footContacts(w.exercises, true)
@@ -180,8 +160,11 @@ export function WorkoutLogger() {
           <section key={ei} className="card stack exercise-card">
             <div className="row">
               <span>
-                <strong>{ex.name}</strong>
+                <strong>
+                  <ExerciseLink id={e.exercise_id} />
+                </strong>
                 <small className="muted block">{prescription(e.sets.length, e.rep_min, e.rep_max, e.exercise_id)}</small>
+                {FORM[e.exercise_id] && <small className="form-cue block">Form: {FORM[e.exercise_id].cues[0]}</small>}
               </span>
               <button
                 className="btn link small"
@@ -197,7 +180,6 @@ export function WorkoutLogger() {
               <span className="muted small">Set</span>
               {weighted && <span className="muted small">lb</span>}
               <span className="muted small">{unit}</span>
-              <span className="muted small">Effort</span>
               <span />
               {e.sets.map((s, si) => (
                 <SetRow
@@ -206,19 +188,15 @@ export function WorkoutLogger() {
                   set={s}
                   weighted={weighted}
                   placeholder={e.rep_max}
-                  youth={youth}
                   onChange={(patch) => updateSet(ei, si, patch)}
                   onToggle={() => toggleDone(ei, si)}
                 />
               ))}
             </div>
-            {youth && e.sets.some((s) => (s.rpe ?? 0) > YOUTH_MAX_RPE) && (
-              <p className="warn-text small">That’s harder than 8 out of 10. Lighten it up and keep every rep smooth.</p>
-            )}
             <div className="row">
               <button
                 className="btn link small"
-                onClick={() => update(w.exercises.map((x, i) => (i === ei ? { ...x, sets: [...x.sets, { ...x.sets[x.sets.length - 1], done: false, reps: null, rpe: null }] } : x)))}
+                onClick={() => update(w.exercises.map((x, i) => (i === ei ? { ...x, sets: [...x.sets, { ...x.sets[x.sets.length - 1], done: false }] } : x)))}
               >
                 + Add set
               </button>
@@ -236,8 +214,6 @@ export function WorkoutLogger() {
         + Add exercise
       </button>
 
-      <RestTimer endsAt={restEnds} onChange={setRestEnds} />
-
       <div className="footer-bar">
         <small className="muted">{setsDone(w)} {setsDone(w) === 1 ? 'set' : 'sets'} done</small>
         <button className="btn" onClick={finish}>
@@ -253,7 +229,6 @@ function SetRow({
   set,
   weighted,
   placeholder,
-  youth,
   onChange,
   onToggle,
 }: {
@@ -261,7 +236,6 @@ function SetRow({
   set: LoggedSet
   weighted: boolean
   placeholder: number
-  youth: boolean
   onChange: (p: Partial<LoggedSet>) => void
   onToggle: () => void
 }) {
@@ -273,15 +247,6 @@ function SetRow({
         <input type="number" inputMode="decimal" aria-label={`Set ${n} weight`} value={set.weight ?? ''} onChange={(e) => onChange({ weight: numOrNull(e.target.value) })} />
       )}
       <input type="number" inputMode="numeric" aria-label={`Set ${n} reps`} placeholder={String(placeholder)} value={set.reps ?? ''} onChange={(e) => onChange({ reps: numOrNull(e.target.value) })} />
-      <select aria-label={`Set ${n} effort`} value={set.rpe ?? ''} onChange={(e) => onChange({ rpe: numOrNull(e.target.value) })}>
-        <option value="">–</option>
-        {[5, 6, 7, 8, 9, 10].map((r) => (
-          <option key={r} value={r}>
-            {r}
-            {youth && r > YOUTH_MAX_RPE ? ' ⚠' : ''}
-          </option>
-        ))}
-      </select>
       <button className={`check ${set.done ? 'on' : ''}`} aria-label={`Set ${n} done`} aria-pressed={set.done} onClick={onToggle}>
         ✓
       </button>

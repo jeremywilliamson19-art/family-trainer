@@ -1,4 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ExerciseLink } from '../../components/ExerciseLink'
 import { exercise } from '../../lib/exercises'
 import { mutateTraining, useTraining } from '../../lib/trainingStore'
 
@@ -20,12 +21,12 @@ export function WorkoutView() {
         const ex = exercise(e.exercise_id)
         return (
           <section key={i} className="card">
-            <strong>{ex.name}</strong>
+            <strong><ExerciseLink id={e.exercise_id} /></strong>
             {e.form_good && <small className="ok"> · form ✓</small>}
             <p className="muted small">
               {e.sets
                 .filter((s) => s.done)
-                .map((s) => `${s.weight && ex.load !== 'bodyweight' ? `${s.weight} lb × ` : ''}${s.reps}${s.rpe ? ` @${s.rpe}` : ''}`)
+                .map((s) => `${s.weight && ex.load !== 'bodyweight' ? `${s.weight} lb × ` : ''}${s.reps}`)
                 .join(' · ')}
             </p>
           </section>

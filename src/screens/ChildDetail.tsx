@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ExerciseLink } from '../components/ExerciseLink'
 import { ScheduleEditor } from '../components/ScheduleEditor'
 import { SportPicker } from '../components/SportPicker'
 import { Toggle } from '../components/Toggle'
@@ -138,7 +139,7 @@ function ChildTraining({ childId }: { childId: string }) {
                 exercise(e.exercise_id).kind === 'strength' ? (
                   <label key={i} className="row toggle">
                     <span className="small">
-                      {exercise(e.exercise_id).name}
+                      <ExerciseLink id={e.exercise_id} who={childId} />
                       <small className="muted block">
                         {e.sets.filter((s) => s.done).map((s) => `${s.weight ? `${s.weight}×` : ''}${s.reps}`).join(', ')}
                       </small>

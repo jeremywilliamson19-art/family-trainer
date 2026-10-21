@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ExerciseLink } from '../../components/ExerciseLink'
 import { exercise, MUSCLES } from '../../lib/exercises'
 import { localDate } from '../../lib/nutrition'
 import { DUMBBELL_HOME, UPPER_LOWER, type Template } from '../../lib/programs'
@@ -117,7 +118,7 @@ export function TrainHome() {
               {plan.exercises.map((pe, i) => (
                 <li key={i} className={pe.optional ? 'muted' : ''}>
                   <span>
-                    {exercise(pe.exercise_id).name}
+                    <ExerciseLink id={pe.exercise_id} />
                     {pe.optional && ' (optional)'}
                   </span>
                   <small className="muted">{prescription(pe.sets, pe.rep_min, pe.rep_max, pe.exercise_id)}</small>
@@ -126,7 +127,7 @@ export function TrainHome() {
             </ul>
             {youth && limits && (
               <p className="muted small">
-                Foot contacts today: {footContacts(plan.exercises)} of {limits.foot_contact_cap}. Effort stays at 8/10 or easier.
+                Foot contacts today: {footContacts(plan.exercises)} of {limits.foot_contact_cap}.
               </p>
             )}
             {plan.notes.map((n) => (

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { exercise } from './exercises'
 import { DUMBBELL_HOME, TEMPLATES, UPPER_LOWER, YOUTH } from './programs'
-import { advise, armWarnings, e1rm, findPRs, footContacts, nextDayIndex, plateau, weekStart, weeklyVolume, youthDayPlan } from './training'
-import type { LoggedExercise, Program, ProgramDay, Workout } from './types'
+import { advise, armWarnings, carryForward, e1rm, findPRs, footContacts, nextDayIndex, plateau, weekStart, weeklyVolume, youthDayPlan } from './training'
+import type { LoggedExercise, LoggedSet, Program, ProgramDay, Workout } from './types'
 
 let n = 0
 /** A finished workout with one exercise; sets as [weight, reps, rpe?]. */
@@ -57,10 +57,9 @@ describe('starter programs', () => {
     }
   })
 
-  it('youth plan: only youth exercises, RPE ≤ 8, ≤ 80 contacts, landing drills first, no max-effort', () => {
+  it('youth plan: only youth exercises, ≤ 80 contacts, landing drills first, no max-effort', () => {
     for (const d of YOUTH.days) {
       expect(d.exercises.every((e) => exercise(e.exercise_id).youth)).toBe(true)
-      expect(d.exercises.every((e) => (e.rpe ?? 0) <= 8)).toBe(true)
       expect(footContacts(d.exercises)).toBeLessThanOrEqual(80)
       const firstLanding = d.exercises.findIndex((e) => exercise(e.exercise_id).kind === 'landing')
       const firstBig = d.exercises.findIndex((e) => exercise(e.exercise_id).highIntensity)
@@ -71,16 +70,31 @@ describe('starter programs', () => {
   })
 })
 
+describe('logging sets', () => {
+  const blank = (): LoggedSet[] => [0, 1, 2].map(() => ({ weight: null, reps: null, rpe: null, done: false }))
+  it('135 × 11 on set 1 fills sets 2 and 3, typed digit by digit', () => {
+    let sets = blank()
+    for (const w of [1, 13, 135]) sets = carryForward(sets, 0, { weight: w })
+    for (const r of [1, 11]) sets = carryForward(sets, 0, { reps: r })
+    expect(sets.map((s) => [s.weight, s.reps])).toEqual([[135, 11], [135, 11], [135, 11]])
+  })
+
+  it('a later set changed by hand keeps its number; finished sets never change', () => {
+    let sets = blank()
+    sets = carryForward(sets, 0, { weight: 135, reps: 11 })
+    sets = carryForward(sets, 2, { reps: 8 }) // set 3 only got 8
+    sets[1] = { ...sets[1], done: true }
+    sets = carryForward(sets, 0, { weight: 140 })
+    expect(sets.map((s) => [s.weight, s.reps])).toEqual([[140, 11], [135, 11], [140, 8]])
+  })
+})
+
 describe('double progression (adult)', () => {
   it('all sets at the top of the range at RPE ≤ 9 → add weight (+5 upper, +10 lower barbell)', () => {
     const a = advise('db_curl', [session('2026-10-01', 'db_curl', [[30, 12, 9], [30, 12, 9], [30, 12, 8]])], false)
     expect(a).toMatchObject({ kind: 'add_weight', weight: 35 })
     expect(advise('back_squat', [session('2026-10-01', 'back_squat', [[225, 10, 8], [225, 10, 9]], {}, [6, 10])], false).weight).toBe(235)
     expect(advise('bench_press', [session('2026-10-01', 'bench_press', [[185, 10, 8]], {}, [6, 10])], false).weight).toBe(190)
-  })
-
-  it('top of range but RPE 10 → don’t add weight yet', () => {
-    expect(advise('db_curl', [session('2026-10-01', 'db_curl', [[30, 12, 10], [30, 12, 9]])], false).kind).not.toBe('add_weight')
   })
 
   it('same reps two sessions in a row → hold', () => {
@@ -108,10 +122,6 @@ describe('youth progression', () => {
     expect(advise('goblet_squat', top(true), true)).toMatchObject({ kind: 'add_weight', weight: 22.5 })
   })
 
-  it('anything above RPE 8 → back off, never add', () => {
-    expect(advise('goblet_squat', [session('2026-10-01', 'goblet_squat', [[20, 12, 9]], { form_good: true })], true).kind).toBe('too_hard')
-  })
-
   it('in season: ~40% fewer sets, and no lifting after 2 lift days', () => {
     const day = YOUTH.days[0]
     const p = youthDayPlan(day, { inSeason: true, liftsThisWeek: 0, contactCap: 80 })
@@ -126,7 +136,6 @@ describe('youth progression', () => {
     const p = youthDayPlan(YOUTH.days[0], { inSeason: false, liftsThisWeek: 0, contactCap: 25 })
     expect(footContacts(p.exercises)).toBeLessThanOrEqual(25)
     expect(exercise(p.exercises[0].exercise_id).kind).toBe('landing')
-    expect(p.exercises.every((e) => (e.rpe ?? 0) <= 8)).toBe(true)
   })
 
   it('reorders landing drills ahead of big jumps if a parent edits them out of order', () => {
@@ -136,11 +145,11 @@ describe('youth progression', () => {
 })
 
 describe('volume, PRs, plateaus', () => {
-  it('counts hard sets per muscle per week; secondary counts half; easy sets don’t count', () => {
-    const w = session('2026-10-20', 'bench_press', [[185, 8, 8], [185, 8, 8], [135, 15, 5]])
+  it('counts completed sets per muscle per week; secondary muscles count half', () => {
+    const w = session('2026-10-20', 'bench_press', [[185, 8], [185, 8], [135, 15]])
     const v = weeklyVolume([w], weekStart('2026-10-20'))
-    expect(v).toMatchObject({ chest: 2, triceps: 1, shoulders: 1 })
-    expect(armWarnings(v)).toEqual(['Triceps: 1 of 12 hard sets this week', 'Biceps: 0 of 12 hard sets this week'])
+    expect(v).toMatchObject({ chest: 3, triceps: 1.5, shoulders: 1.5 })
+    expect(armWarnings(v)).toEqual(['Triceps: 1 of 12 sets this week', 'Biceps: 0 of 12 sets this week'])
     expect(weekStart('2026-10-25')).toBe('2026-10-19') // Sunday → Monday before
   })
 

@@ -779,12 +779,12 @@ input[type='search'] {
 /* Set logging */
 .set-grid {
   display: grid;
-  grid-template-columns: 28px 1fr 1fr 64px 48px;
+  grid-template-columns: 28px 1fr 1fr 56px;
   gap: 6px;
   align-items: center;
 }
 .set-grid.no-weight {
-  grid-template-columns: 28px 1fr 64px 48px;
+  grid-template-columns: 28px 1fr 56px;
 }
 .set-grid input,
 .set-grid select {
@@ -810,37 +810,6 @@ input[type='search'] {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-text);
-}
-
-.rest-timer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 64px);
-  margin: 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: #0f172a;
-  color: #fff;
-  box-shadow: 0 6px 20px rgb(0 0 0 / 0.3);
-  z-index: 5;
-}
-.rest-timer .time {
-  flex: 1;
-  font-size: 22px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.rest-timer.done {
-  background: var(--accent);
-  color: var(--accent-text);
-}
-.rest-timer .btn.secondary {
-  color: inherit;
-  border-color: rgb(255 255 255 / 0.4);
 }
 
 /* Program editor */
@@ -1302,4 +1271,32 @@ details summary {
 
 .card a:not(.btn):not(.link-row) {
   color: var(--accent);
+}
+
+/* Exercise links and form guides */
+.ex-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+}
+.form-link::before {
+  content: 'Form guide: ';
+  color: var(--muted);
+}
+.form-cue {
+  color: var(--accent);
+  margin-top: 2px;
+}
+.mistakes {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.back-btn {
+  align-self: flex-start;
+  padding: 0;
+  min-height: 32px;
 }

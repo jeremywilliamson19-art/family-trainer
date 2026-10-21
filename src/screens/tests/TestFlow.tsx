@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { TestDiagram } from '../../components/tests/TestDiagram'
 import { VideoMarker } from '../../components/tests/VideoMarker'
+import { ExerciseLink } from '../../components/ExerciseLink'
+import { newWorkout } from '../training/plan'
 import { api } from '../../lib/api'
 import { better, computeResult, formatResult, TEST_BY_ID, type TestId, type TestResult } from '../../lib/agility'
 import { readFileInfo, niceFps } from '../../lib/mp4'
@@ -11,7 +13,7 @@ import { coverage, crowded, cutMetrics, jumpMetrics, selectAthlete, sprintMetric
 import { analyzeFrames, seekFrame } from '../../lib/pose/runner'
 import { useMember } from '../../lib/session'
 import { newId } from '../../lib/syncStore'
-import { mutateTraining, useTraining } from '../../lib/trainingStore'
+import { mutateTraining, setDraft, useTraining } from '../../lib/trainingStore'
 import type { Member, Program, TestRecord } from '../../lib/types'
 
 type Step = 'setup' | 'video' | 'mark' | 'result'
@@ -61,7 +63,6 @@ export function TestFlow() {
   if (!test) return <div className="screen"><p className="muted">Unknown test.</p></div>
   const athlete = members.find((m) => m.id === athleteId)
   const athleteName = athlete?.display_name ?? (forChild ? 'Athlete' : me.display_name)
-  const isYouth = athlete?.role === 'child' || me.role === 'child'
 
   const result: TestResult | null = test.manualValue
     ? Number(manual.ft) * 12 + Number(manual.inch || 0) > 0
@@ -203,11 +204,20 @@ export function TestFlow() {
     }
   }
 
+  /** Opens the drills as a workout right away (for the person on this phone). */
+  const startDrills = () => {
+    if (!drills) return
+    const list = [...drills.fixes, ...drills.extras].slice(0, 6)
+    const plan = { exercises: list.map((d) => ({ exercise_id: d.exercise_id, sets: 3, rep_min: 5, rep_max: 8, rest_s: 60 })), notes: [] }
+    setDraft(newWorkout({ memberId: me.id, name: `Form drills (${test.short})`, location: 'home', program: null, dayIndex: null, plan, workouts: own.workouts, youth: me.role === 'child' }))
+    nav('/train/workout')
+  }
+
   /** Adds the drill picks as a "Form drills" day in the athlete's program. */
   const addDrillsToProgram = async () => {
     if (!drills) return
     const list = [...drills.fixes, ...drills.extras].slice(0, 6)
-    const day = { name: `Form drills (${test.short})`, exercises: list.map((d) => ({ exercise_id: d.exercise_id, sets: 3, rep_min: 5, rep_max: 8, rest_s: 60, ...(isYouth ? { rpe: 6 } : {}) })) }
+    const day = { name: `Form drills (${test.short})`, exercises: list.map((d) => ({ exercise_id: d.exercise_id, sets: 3, rep_min: 5, rep_max: 8, rest_s: 60 })) }
     try {
       const programs: Program[] = forChild ? (await api<{ programs: Program[] }>('trainingSync', { member_id: athleteId, from: '9999-01-01' })).programs : own.programs
       const p = programs[0]
@@ -429,10 +439,22 @@ export function TestFlow() {
               <h2>Drills</h2>
               {[...drills.fixes.map((d) => [d, 'fix'] as const), ...drills.extras.map((d) => [d, 'football'] as const)].map(([d, why]) => (
                 <div key={d.exercise_id} className="drill">
-                  <strong>{d.name}</strong> <small className="muted">· {d.dose}{why === 'football' ? ' · running-back drill' : ''}</small>
+                  <strong>
+                    <ExerciseLink id={d.exercise_id} who={forChild ? athleteId : undefined} />
+                  </strong>{' '}
+                  <small className="muted">
+                    · {d.dose}
+                    {why === 'football' ? ' · running-back drill' : ''}
+                  </small>
                   <small className="block">{d.how}</small>
                 </div>
               ))}
+              <p className="muted small">Tap a drill for how to do it well and a demo video.</p>
+              {!forChild && (
+                <button className="btn" onClick={startDrills}>
+                  Start these drills now
+                </button>
+              )}
               {me.role !== 'child' && (
                 <button className="btn secondary" onClick={() => void addDrillsToProgram()}>
                   Add these to {forChild ? 'his' : 'my'} program

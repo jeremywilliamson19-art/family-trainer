@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { DailyBars } from '../../components/nutrition/DailyBars'
 import { TrendChart } from '../../components/progress/TrendChart'
+import { ExerciseLink } from '../../components/ExerciseLink'
 import { api } from '../../lib/api'
 import { formatResult, TEST_BY_ID } from '../../lib/agility'
 import { localDate } from '../../lib/nutrition'
@@ -242,6 +243,7 @@ function LiftRow({ l }: { l: LiftProgress }) {
           {l.sessions > 1 ? `${signed(l.change, 0)} ${unit} (${signed(l.pct, 0)}%)` : 'first session'}
         </span>
       </button>
+      <ExerciseLink id={l.exercise_id} className="small form-link" />
       <small className="muted">
         Baseline {l.baseline.label} → best <strong>{l.best.label}</strong>
         {l.measure === 'e1rm' && ` (est. max ${l.baseline.value} → ${l.best.value} lb)`} · {l.sessions} session{l.sessions === 1 ? '' : 's'}

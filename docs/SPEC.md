@@ -131,7 +131,7 @@ For the son, the report covers protein days hit, workouts done, any new test bes
 **Logging:**
 
 - Pick a saved routine or start an empty workout. Add exercises from a built-in library filtered by location (gym or home equipment).
-- Each set records weight, reps, and RPE (1–10, optional).
+- Each set records weight and reps. ~~RPE~~ and the ~~rest timer~~ were removed 2026-10-21 at Jeremy's request: keep logging as simple as possible and base advice on the numbers alone. A typed weight/reps carries into the following sets.
 - Pre-fill from the last time that exercise was done.
 - Rest timer between sets.
 - Mark PRs automatically.
