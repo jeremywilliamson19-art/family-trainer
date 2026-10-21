@@ -76,7 +76,15 @@ const PAIRING_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
 const ADMIN_DEFAULT_DISLIKES = ['beans', 'legumes', 'edamame', 'lentils', 'chickpeas', 'hummus']
 
 const hash = (s: string) => hex(sha256(utf8(s)))
-const normEmail = (e: unknown) => String(e ?? '').trim().toLowerCase()
+/** Lowercased; for Gmail, dots and +tags are dropped since Gmail ignores them. */
+function normEmail(e: unknown): string {
+  const email = String(e ?? '').trim().toLowerCase()
+  const [local, domain] = email.split('@')
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return `${local.split('+')[0].replace(/\./g, '')}@gmail.com`
+  }
+  return email
+}
 const iso = (env: Env) => new Date(env.now()).toISOString()
 
 function publicMember(m: MemberRow): Member {
@@ -209,7 +217,7 @@ function requireAdmin(me: MemberRow) {
 function requestCode(env: Env, p: { email?: unknown }) {
   const email = normEmail(p.email)
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new ApiError('invalid', 'Enter a valid email')
-  const allowed = email === env.adminEmail || !!memberByEmail(env, email) || !!env.store.get('invites', email)
+  const allowed = email === normEmail(env.adminEmail) || !!memberByEmail(env, email) || !!env.store.get('invites', email)
   if (!allowed) {
     throw new ApiError('forbidden', `${email} isn’t on the family list. Check for a typo, or ask Jeremy to add it.`)
   }
@@ -246,7 +254,7 @@ function verifyCode(env: Env, p: { email?: unknown; code?: unknown; display_name
   let member = memberByEmail(env, email)
   if (!member) {
     const invite = env.store.get<Invite>('invites', email)
-    if (email === env.adminEmail && !env.store.all<MemberRow>('members').some((m) => m.role === 'admin')) {
+    if (email === normEmail(env.adminEmail) && !env.store.all<MemberRow>('members').some((m) => m.role === 'admin')) {
       member = createMember(env, email, 'admin', 'Jeremy')
     } else if (invite) {
       member = createMember(env, email, 'adult', invite.display_name ?? email.split('@')[0])

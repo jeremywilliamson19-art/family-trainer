@@ -6,7 +6,7 @@ import { handle, type Env } from '../src/api'
 import { MemoryStore } from '../src/store'
 import { generateVapidKeys } from '../src/webpush'
 
-const DAD = 'jeremy@example.com'
+const DAD = 'jeremywilliamson19@gmail.com'
 const MOM = 'amanda@example.com'
 
 let env: Env
@@ -47,6 +47,14 @@ describe('sign-in', () => {
     const t = signIn(DAD)
     expect(call('me', {}, t)).toMatchObject({ role: 'admin', display_name: 'Jeremy' })
     expect(call('getSettings', {}, t).dislikes).toContain('beans')
+  })
+
+  it('Gmail addresses match regardless of dots, +tags and case', () => {
+    call('requestCode', { email: ' Jeremy.Williamson19+trainer@GMAIL.com' })
+    const code = mail[0].subject.match(/(\d{6})/)![1]
+    const t = call<{ token: string }>('verifyCode', { email: 'jeremy.williamson19@gmail.com', code }).token
+    expect(call('me', {}, t).role).toBe('admin')
+    expect(mail[0].to).toBe('jeremywilliamson19@gmail.com')
   })
 
   it('strangers get no code and no email is sent', () => {
