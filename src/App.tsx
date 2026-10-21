@@ -1,0 +1,125 @@
+import { useEffect, useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { TabBar } from './components/TabBar'
+import { PushBanner } from './components/PushBanner'
+import { isIOS, isStandalone } from './lib/platform'
+import { getPushState, syncPushSubscription } from './lib/push'
+import { useSession } from './lib/session'
+import { isConfigured } from './lib/supabase'
+import { Admin } from './screens/Admin'
+import { AddChild } from './screens/AddChild'
+import { ChildDetail } from './screens/ChildDetail'
+import { Home } from './screens/Home'
+import { InstallGuide } from './screens/InstallGuide'
+import { NotificationsSetup } from './screens/NotificationsSetup'
+import { Settings } from './screens/Settings'
+import { SignIn } from './screens/SignIn'
+import { Message } from './components/Message'
+
+const SKIP_INSTALL_KEY = 'ft:skip-install'
+const PUSH_ONBOARDED_KEY = 'ft:push-onboarded'
+
+function read(key: string) {
+  try {
+    return localStorage.getItem(key) === '1'
+  } catch {
+    return false
+  }
+}
+function write(key: string) {
+  try {
+    localStorage.setItem(key, '1')
+  } catch {
+    /* private mode: fine, we'll just ask again */
+  }
+}
+
+export default function App() {
+  const { status, error, member, signOut } = useSession()
+  const [skipInstall, setSkipInstall] = useState(() => read(SKIP_INSTALL_KEY))
+  const [pushOnboarded, setPushOnboarded] = useState(() => read(PUSH_ONBOARDED_KEY))
+
+  useEffect(() => {
+    if (status !== 'ready') return
+    syncPushSubscription()
+    // Someone who already allowed notifications doesn't need the intro.
+    getPushState().then((s) => {
+      if (s === 'subscribed') {
+        write(PUSH_ONBOARDED_KEY)
+        setPushOnboarded(true)
+      }
+    })
+  }, [status])
+
+  if (!isConfigured) {
+    return (
+      <Message title="Not configured yet">
+        Copy <code>.env.example</code> to <code>.env.local</code> and add the Supabase URL and key. See
+        docs/SETUP.md.
+      </Message>
+    )
+  }
+
+  // On iPhone, push only works from the home-screen app, so install comes first.
+  if (isIOS() && !isStandalone() && !skipInstall) {
+    return (
+      <InstallGuide
+        onSkip={() => {
+          write(SKIP_INSTALL_KEY)
+          setSkipInstall(true)
+        }}
+      />
+    )
+  }
+
+  switch (status) {
+    case 'loading':
+      return <Message title="Loading…" />
+    case 'signed-out':
+      return <SignIn />
+    case 'error':
+      return (
+        <Message title="Couldn't load your account" action={{ label: 'Sign out', onClick: signOut }}>
+          {error}
+        </Message>
+      )
+    case 'not-invited':
+      return (
+        <Message title="You're not on the list" action={{ label: 'Sign out', onClick: signOut }}>
+          This app is private to one family. Ask Jeremy to invite this email address, then sign in again.
+        </Message>
+      )
+  }
+
+  if (!pushOnboarded) {
+    return (
+      <NotificationsSetup
+        onDone={() => {
+          write(PUSH_ONBOARDED_KEY)
+          setPushOnboarded(true)
+        }}
+      />
+    )
+  }
+
+  return (
+    <div className="app">
+      <PushBanner />
+      <main className="content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/settings" element={<Settings />} />
+          {member?.role === 'admin' && (
+            <>
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/add-child" element={<AddChild />} />
+              <Route path="/admin/child/:id" element={<ChildDetail />} />
+            </>
+          )}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <TabBar />
+    </div>
+  )
+}

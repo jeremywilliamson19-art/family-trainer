@@ -1,0 +1,35 @@
+{
+  "name": "family-trainer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "icons": "pwa-assets-generator"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4",
+    "workbox-core": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vite-pwa/assets-generator": "^2.0.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.5",
+    "web-push": "^3.6.7"
+  }
+}

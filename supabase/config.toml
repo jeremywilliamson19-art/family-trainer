@@ -1,0 +1,33 @@
+# Settings used by `supabase start` / `supabase link`. For the hosted
+# project, mirror the [auth] values in the dashboard (see docs/SETUP.md).
+project_id = "family-trainer"
+
+[api]
+schemas = ["public"]
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["https://*.vercel.app"]
+# The home-screen app can't receive magic links (they open in Safari),
+# so everyone signs in by typing a 6-digit code.
+enable_signup = true
+# Keep the son's phone signed in indefinitely; refresh tokens rotate.
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+otp_length = 6
+otp_expiry = 900
+
+[auth.email.template.magic_link]
+subject = "Your Family Trainer code: {{ .Token }}"
+content_path = "./supabase/templates/code.html"
+
+[auth.email.template.confirmation]
+subject = "Your Family Trainer code: {{ .Token }}"
+content_path = "./supabase/templates/code.html"
+
+[functions.pairing-redeem]
+verify_jwt = false
