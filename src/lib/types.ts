@@ -111,3 +111,67 @@ export interface ChildTargets {
   kind: 'child'
   protein_g: number
 }
+
+// ---------------------------------------------------------------------------
+// Training
+// ---------------------------------------------------------------------------
+
+export interface ProgramExercise {
+  exercise_id: string
+  sets: number
+  rep_min: number
+  rep_max: number
+  /** Target effort; the son's is capped at 8. */
+  rpe?: number
+  rest_s: number
+  /** Optional: only on some weeks / skippable (conditioning). */
+  optional?: boolean
+}
+
+export interface ProgramDay {
+  name: string
+  exercises: ProgramExercise[]
+}
+
+export interface Program {
+  id: string
+  member_id: string
+  /** Which starter it came from. */
+  template: string
+  name: string
+  location: 'gym' | 'home'
+  youth: boolean
+  days: ProgramDay[]
+  updated_at: string
+}
+
+export interface LoggedSet {
+  weight: number | null
+  reps: number | null
+  rpe: number | null
+  done: boolean
+}
+
+export interface LoggedExercise {
+  exercise_id: string
+  /** Rep range it was prescribed with (for progression). */
+  rep_min: number
+  rep_max: number
+  sets: LoggedSet[]
+  /** The son's sessions: a parent marks form "good" to unlock more weight. */
+  form_good?: boolean | null
+}
+
+export interface Workout {
+  id: string
+  member_id: string
+  date: string
+  name: string
+  location: 'gym' | 'home'
+  program_id: string | null
+  day_index: number | null
+  started_at: string
+  finished_at: string | null
+  exercises: LoggedExercise[]
+  notes?: string
+}

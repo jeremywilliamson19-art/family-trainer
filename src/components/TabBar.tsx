@@ -11,6 +11,9 @@ export function TabBar() {
       <NavLink to="/log">
         <span aria-hidden>🍽️</span>Log
       </NavLink>
+      <NavLink to="/train">
+        <span aria-hidden>🏋️</span>Train
+      </NavLink>
       {member.role === 'admin' && (
         <NavLink to="/admin">
           <span aria-hidden>👨‍👩‍👦</span>Family

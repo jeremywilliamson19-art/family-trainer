@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { api, getToken, setToken } from './api'
 import { stopNutrition } from './nutritionStore'
+import { setDraft, stopTraining } from './trainingStore'
 import type { Member } from './types'
 
 type Status = 'loading' | 'signed-out' | 'ready' | 'error'
@@ -55,6 +56,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const clear = useCallback(() => {
     setToken(null)
     stopNutrition()
+    stopTraining()
+    setDraft(null)
     try {
       localStorage.removeItem(MEMBER_KEY)
     } catch {

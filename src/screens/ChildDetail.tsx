@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ScheduleEditor } from '../components/ScheduleEditor'
 import { SportPicker } from '../components/SportPicker'
 import { Toggle } from '../components/Toggle'
 import { api } from '../lib/api'
-import { dayTotals, localDate } from '../lib/nutrition'
-import type { ChildGuardianSettings, ChildTargets, Meal, Member, MemberPrivate, MemberSettings } from '../lib/types'
+import { exercise } from '../lib/exercises'
+import { addDays, dayTotals, localDate } from '../lib/nutrition'
+import { YOUTH } from '../lib/programs'
+import { makeProgram } from './training/TrainHome'
+import type { ChildGuardianSettings, ChildTargets, Meal, Member, MemberPrivate, MemberSettings, Program, Workout } from '../lib/types'
 import { useRow } from '../lib/useRow'
 
 function PairingCode({ childId }: { childId: string }) {
@@ -75,6 +78,81 @@ function useChild(id: string) {
   return { row, save, error }
 }
 
+/** The son's program and recent sessions, with the form check that unlocks more weight. */
+function ChildTraining({ childId }: { childId: string }) {
+  const [data, setData] = useState<{ programs: Program[]; workouts: Workout[] } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const load = useCallback(() => {
+    api<{ programs: Program[]; workouts: Workout[] }>('trainingSync', { member_id: childId, from: addDays(localDate(), -30) }).then(setData, (e) =>
+      setError((e as Error).message),
+    )
+  }, [childId])
+  useEffect(load, [load])
+
+  const setUp = async () => {
+    await api('saveProgram', { program: makeProgram(YOUTH, childId) }).catch((e) => setError((e as Error).message))
+    load()
+  }
+  const markForm = async (w: Workout, i: number, good: boolean) => {
+    setData((d) => d && { ...d, workouts: d.workouts.map((x) => (x.id === w.id ? { ...x, exercises: x.exercises.map((e, j) => (j === i ? { ...e, form_good: good } : e)) } : x)) })
+    await api('setFormGood', { workout_id: w.id, exercise_index: i, good }).catch((e) => setError((e as Error).message))
+  }
+
+  if (!data) return error ? <p className="error">{error}</p> : null
+  const program = data.programs[0]
+  const recent = [...data.workouts].filter((w) => w.finished_at).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  return (
+    <section className="card stack">
+      <h2>Training</h2>
+      {program ? (
+        <div className="row">
+          <span>
+            {program.name}
+            <small className="muted block">{program.days.length} days · only you can edit it</small>
+          </span>
+          <Link to={`/train/program/${program.id}?member=${childId}`} className="btn small secondary">
+            Edit
+          </Link>
+        </div>
+      ) : (
+        <>
+          <p className="muted small">3-day youth plan: landing drills, jumps, sprint mechanics and technique-first strength.</p>
+          <button className="btn" onClick={setUp}>
+            Set up his program
+          </button>
+        </>
+      )}
+      {recent.length > 0 && (
+        <>
+          <h3>Check his form</h3>
+          <p className="muted small">When his form looked good, tap it. Weight only goes up after you do.</p>
+          {recent.map((w) => (
+            <div key={w.id} className="form-check">
+              <strong className="small">
+                {w.name} · {new Date(`${w.date}T12:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              </strong>
+              {w.exercises.map((e, i) =>
+                exercise(e.exercise_id).kind === 'strength' ? (
+                  <label key={i} className="row toggle">
+                    <span className="small">
+                      {exercise(e.exercise_id).name}
+                      <small className="muted block">
+                        {e.sets.filter((s) => s.done).map((s) => `${s.weight ? `${s.weight}×` : ''}${s.reps}`).join(', ')}
+                      </small>
+                    </span>
+                    <input type="checkbox" role="switch" checked={!!e.form_good} onChange={(ev) => markForm(w, i, ev.target.checked)} />
+                  </label>
+                ) : null,
+              )}
+            </div>
+          ))}
+        </>
+      )}
+      {error && <p className="error">{error}</p>}
+    </section>
+  )
+}
+
 /** The parent's view of the son's protein today. */
 function ChildProteinToday({ childId }: { childId: string }) {
   const [data, setData] = useState<{ eaten: number; target: number | null } | null>(null)
@@ -136,6 +214,7 @@ export function ChildDetail() {
       {error && <p className="error">{error}</p>}
 
       <ChildProteinToday childId={k.id} />
+      <ChildTraining childId={k.id} />
 
       <section className="card">
         <h2>Sign in his phone</h2>

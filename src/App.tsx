@@ -16,6 +16,11 @@ import { Settings } from './screens/Settings'
 import { SignIn } from './screens/SignIn'
 import { Message } from './components/Message'
 import { startNutrition } from './lib/nutritionStore'
+import { startTraining } from './lib/trainingStore'
+import { ChooseProgram, TrainHome } from './screens/training/TrainHome'
+import { WorkoutLogger } from './screens/training/WorkoutLogger'
+import { WorkoutView } from './screens/training/WorkoutView'
+import { ProgramEditor } from './screens/training/ProgramEditor'
 import { Log } from './screens/nutrition/Log'
 import { MealEditor } from './screens/nutrition/MealEditor'
 import { TargetsSetup } from './screens/nutrition/TargetsSetup'
@@ -45,7 +50,9 @@ export default function App() {
   const [pushOnboarded, setPushOnboarded] = useState(() => read(PUSH_ONBOARDED_KEY))
 
   useEffect(() => {
-    if (member) startNutrition(member.id)
+    if (!member) return
+    startNutrition(member.id)
+    startTraining(member.id)
   }, [member])
 
   useEffect(() => {
@@ -112,6 +119,11 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/log" element={<Log />} />
+          <Route path="/train" element={<TrainHome />} />
+          <Route path="/train/workout" element={<WorkoutLogger />} />
+          <Route path="/train/log/:id" element={<WorkoutView />} />
+          <Route path="/train/program/:id" element={<ProgramEditor />} />
+          {member?.role !== 'child' && member && <Route path="/train/choose" element={<ChooseProgram memberId={member.id} />} />}
           <Route path="/meal/new" element={<MealEditor key={location.search} />} />
           <Route path="/meal/:id" element={<MealEditor />} />
           {member?.role !== 'child' && <Route path="/targets" element={<TargetsSetup />} />}

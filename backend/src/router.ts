@@ -1,9 +1,10 @@
 // Dispatches { action, token, ...params } to the handler modules.
 import { ApiError, caller, HOUSEHOLD_AUTHED, HOUSEHOLD_PUBLIC, type Env, type Params } from './api'
 import { NUTRITION_AUTHED, recomputeTargets } from './nutrition'
+import { TRAINING_AUTHED } from './training'
 
 const PUBLIC = HOUSEHOLD_PUBLIC
-const AUTHED = { ...HOUSEHOLD_AUTHED, ...NUTRITION_AUTHED }
+const AUTHED = { ...HOUSEHOLD_AUTHED, ...NUTRITION_AUTHED, ...TRAINING_AUTHED }
 
 /** Actions that change inputs to someone's targets, and whose targets. */
 const RECOMPUTE: Record<string, (p: Params, myId: string, result: unknown) => string> = {
